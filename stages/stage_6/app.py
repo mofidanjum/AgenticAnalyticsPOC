@@ -10,8 +10,15 @@ from anthropic import Anthropic
 # Add parent directory to path
 sys.path.insert(0, str(os.path.dirname(__file__)))
 
-from config import *
-from utils import *
+try:
+    from config import *
+    from utils import *
+except ImportError:
+    # If imports fail, define defaults
+    API_KEY = os.getenv("ANTHROPIC_API_KEY")
+    DB_PATH = "data/processed/superstore.duckdb"
+    METADATA_PATH = "analytics/metadata/orders.yaml"
+    LOG_FILE = "stages/stage_6/query_logs.json"
 
 # ============================================================================
 # PAGE CONFIGURATION
