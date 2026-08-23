@@ -8,22 +8,6 @@ Building a Claude-powered agent that answers natural-language questions over str
 
 **Key Learning**: Each stage teaches a specific Claude concept, building from data ingestion → agent reasoning → visualization.
 
-**📖 For step-by-step walkthrough**: See [README.md](../README.md) — explains how each piece works, testing workflows, and troubleshooting.
-
-**⚡ Quick start (Static Superstore data)**: 
-```powershell
-$env:ANTHROPIC_API_KEY = "your-api-key"
-& .venv\Scripts\python.exe analytics/agent_with_charts.py
-```
-
-**🆕 Dynamic Dataset Selection** (Use any Kaggle dataset):
-```powershell
-& .venv\Scripts\python.exe analytics/dynamic_dataset_selector.py
-# Type: "I want e-commerce data"
-# Claude suggests matching dataset
-# Auto-download, auto-schema, ready to query!
-```
-
 ---
 
 ## Architecture
@@ -44,63 +28,32 @@ PNG charts + natural language answers
 
 ---
 
-## Folder Structure (Organized by Stage)
+## Folder Structure
 
 ```
 agentic-data-pipeline/
 ├── .claude/
-│   └── CLAUDE.md                              # This file (project guide)
-├── .gitignore
-│
-├── stages/                                    # All stages organized here
-│   ├── stage_0/                               # Environment Setup
-│   │   └── (setup via .venv/)
-│   │
-│   ├── stage_1/                               # Download Dataset
-│   │   ├── 01_download_dataset.py             # Download from Kaggle
-│   │   └── STAGE_1_SETUP.md                   # Documentation
-│   │
-│   ├── stage_2/                               # Load into DuckDB
-│   │   ├── 02_load_duckdb.py                  # Full load
-│   │   ├── setup_dataset.py                   # Quick setup (recommended)
-│   │   └── STAGE_2_SETUP.md                   # Documentation
-│   │
-│   ├── stage_3/                               # Generate Metadata
-│   │   ├── 03_generate_metadata_draft.py      # Auto-generate
-│   │   └── STAGE_3_SETUP.md                   # Documentation
-│   │
-│   ├── stage_4/                               # Text-to-SQL Agent
-│   │   ├── agent.py                           # Main agent (Claude API)
-│   │   ├── validate_agent.py                  # Validation
-│   │   └── STAGE_4_SETUP.md                   # Documentation
-│   │
-│   └── stage_5/                               # Charting
-│       ├── agent_with_charts.py               # Agent + charts
-│       └── STAGE_5_SETUP.md                   # Documentation
-│
-├── data/                                      # Data storage
-│   ├── raw/                                   # Raw CSV (from Stage 1)
+│   └── CLAUDE.md                 # This file (project guide)
+├── .gitignore                    # Ignore data/raw, .venv, analytics/output
+├── data/
+│   ├── raw/                      # Downloaded CSV (gitignored)
 │   │   └── Sample - Superstore.csv
-│   ├── processed/                             # DuckDB (from Stage 2)
+│   ├── processed/                # DuckDB database
 │   │   └── superstore.duckdb
-│   └── sample/                                # Test fixtures
+│   └── sample/                   # Sample fixtures (200 rows)
 │       └── superstore_sample.csv
-│
-├── analytics/                                 # Metadata layer
-│   ├── metadata/
-│   │   └── orders.yaml                        # Column descriptions
-│   └── output/                                # Generated charts
+├── analytics/
+│   ├── 01_download_dataset.py    # Stage 1 script
+│   ├── 02_load_duckdb.py         # Stage 2 script
+│   ├── 03_generate_metadata_draft.py  # Stage 3 helper
+│   ├── metadata/                 # Stage 3 output
+│   │   └── orders.yaml           # Column descriptions (hand-edited)
+│   ├── agent.py                  # Stage 4: Main agent loop
+│   └── output/                   # Stage 5: Charts
 │       └── (PNG files)
-│
-├── 🔧 Utilities
-│   ├── sql_shell.py                           # Interactive SQL terminal
-│   ├── run_query.py                           # Direct SQL (no API key)
-│   └── .venv/                                 # Virtual environment
-│
-└── 📖 Documentation
-    ├── README.md                              # Complete guide (START HERE)
-    ├── STAGES_OVERVIEW.md                     # Visual overview
-    └── .claude/CLAUDE.md                      # Project runbook
+├── sql_shell.py                  # Interactive SQL terminal
+├── STAGE_1_SETUP.md              # Detailed Stage 1 documentation
+└── STAGE_2_SETUP.md              # Detailed Stage 2 documentation
 ```
 
 ---
@@ -451,186 +404,66 @@ Bye!
 - Reduces token usage significantly
 - Perfect for this use case
 
-**Current Model**: `claude-haiku-4-5-20251001` (latest, updated 2026-08-23)
-
-**Validation**: Use `validate_agent.py` to verify agent results:
-
-```powershell
-$env:ANTHROPIC_API_KEY = "your-api-key-here"
-& .venv\Scripts\python.exe validate_agent.py
-```
-
-Ask questions like "top 5 customers" and it will:
-1. Run agent → get SQL from Claude
-2. Execute same SQL directly
-3. Compare results → show ✓ MATCH or ✗ MISMATCH
-
-This proves Claude's answers are correct.
-
 **Key concepts learned**:
 - **Tool use**: Claude proposes function calls, your code executes them
 - **System prompts**: Grounding LLM with semantic metadata
 - **Agent loops**: Observe → Act (propose SQL) → Observe (results) → Respond
 - **Tool execution**: Bridge between Claude (cloud) and DuckDB (local)
 - **Cost optimization**: Model selection matters (Haiku vs Sonnet trade-off)
-- **Validation**: Comparing LLM output with ground truth SQL results
 
 ---
 
-### Stage 5: Add Charting Tool
+### Stage 4 Enhanced: Integrated Charting
 
-**What**: Extend agent with a second tool for data visualization
+**What**: Charting capability is now built directly into Stage 4 agent
 
-**Script**: `analytics/agent_with_charts.py` (enhanced version of Stage 4)
+**Tools available**:
+1. `run_sql()` - Execute SQL queries against DuckDB
+2. `render_chart()` - Create visualizations from query results
 
 **What it does**:
 1. Keeps Stage 4 agent loop intact
-2. Adds second tool: `render_chart(spec: dict)`
-3. Claude picks chart type based on question:
-   - Trend questions → line chart
-   - Comparison questions → bar chart
-   - Distributions → histogram
+2. Adds `render_chart()` tool for visualization
+3. Claude intelligently picks chart type based on data:
+   - Trends/time series → line chart
+   - Comparisons → bar chart
+   - Distributions → pie chart
+   - Correlations → scatter chart
 4. Generates PNG to `analytics/output/`
 5. Returns chart path + natural language answer
 
-**Chart spec format** (declarative, not raw code):
-```python
-{
-    "type": "line",  # or "bar", "grouped_bar", "histogram"
-    "x": "order_date",
-    "y": "sales",
-    "series": None,  # or column name for line color/bar grouping
-    "title": "Sales Over Time"
-}
+**Usage examples**:
 ```
+📊 User: Show me sales by region
 
-**Prerequisites**:
-- Stage 4 complete (agent working)
-- matplotlib installed (already in `.venv`)
+🔍 SQL: SELECT region, SUM(sales) FROM orders GROUP BY region
 
-**Create the script**:
-```powershell
-# File: analytics/agent_with_charts.py
-# Contents below in STAGE_5_SCRIPT section
+📊 Chart saved to analytics/output/chart_20260824_143022.png
+
+💬 Answer: West region leads with $725K in sales...
+
+---
+
+📊 User: How did sales trend over time?
+
+🔍 SQL: SELECT order_date, SUM(sales) FROM orders GROUP BY order_date
+
+📊 Chart saved to analytics/output/chart_20260824_143045.png
+
+💬 Answer: Sales showed an upward trend throughout 2016...
 ```
 
 **Run**:
 ```powershell
 cd C:\Users\Sarah\projects\agentic-data-pipeline
-$env:ANTHROPIC_API_KEY = "your-api-key-here"
-& .venv\Scripts\python.exe analytics/agent_with_charts.py
+$env:ANTHROPIC_API_KEY = "your-api-key"
+& .venv\Scripts\python.exe analytics/agent.py
 ```
-
-**Usage example**:
-```
-Agent ready. Ask a question:
-> How did sales change over time by region?
-
-[Agent calls two tools]
-1. run_sql("SELECT order_date, region, SUM(sales) FROM orders GROUP BY order_date, region")
-2. render_chart({
-     "type": "line",
-     "x": "order_date",
-     "y": "sales",
-     "series": "region",
-     "title": "Sales Trend by Region"
-   })
-
-Chart saved: analytics/output/chart_20260823_143022.png
-
-Answer: Sales showed steady growth in West region, while Central region remained stable...
-```
-
-**Output files created**:
-- ✅ `analytics/agent_with_charts.py`
-- ✅ `analytics/output/*.png` (one chart per query)
 
 **Key concepts learned**:
-- Multi-tool agents: Coordinating multiple tool calls
-- Declarative specs: Constraining LLM output format
-- Agent composition: Combining tools into workflows
-
----
-
-### Stage 5: Add Charting Tool
-
-**What**: Extend agent with a second tool for data visualization
-
-**Script**: `analytics/agent_with_charts.py` (enhanced version of Stage 4)
-
-**What it does**:
-1. Keeps Stage 4 agent loop intact
-2. Adds second tool: `render_chart(spec: dict)`
-3. Claude picks chart type based on question:
-   - Trend questions → line chart
-   - Comparison questions → bar chart
-   - Distributions → histogram
-4. Generates PNG to `analytics/output/`
-5. Returns chart path + natural language answer
-
-**Prerequisites**:
-- Stage 4 complete (agent working with valid API key)
-- matplotlib installed (already in `.venv`)
-
-**Run**:
-```powershell
-$env:ANTHROPIC_API_KEY = "your-api-key-here"
-& .venv\Scripts\python.exe analytics/agent_with_charts.py
-```
-
-**Usage example**:
-```
-Agent ready. Ask a question:
-> How did sales change over time by region?
-
-[Agent calls two tools]
-1. run_sql("SELECT order_date, region, SUM(sales) FROM orders GROUP BY order_date, region")
-2. render_chart({
-     "type": "line",
-     "x": "order_date",
-     "y": "sales",
-     "series": "region",
-     "title": "Sales Trend by Region"
-   })
-
-Chart saved: analytics/output/chart_20260823_143022.png
-
-Answer: Sales showed steady growth in West region, while Central region remained stable...
-```
-
-**Chart spec format** (declarative, not raw code):
-```python
-{
-    "type": "line",  # or "bar", "grouped_bar", "histogram"
-    "x": "column_name",
-    "y": "column_name",
-    "series": None,  # or column name for line color/bar grouping
-    "title": "Chart Title"
-}
-```
-
-**Output files created**:
-- ✅ `analytics/agent_with_charts.py` (when built)
-- ✅ `analytics/output/*.png` (one chart per visual query)
-
-**Key concepts learned**:
-- Multi-tool agents: Coordinating multiple tool calls
-- Declarative specs: Constraining LLM output format
-- Data visualization: Matplotlib integration with agent
-- Agent composition: Combining tools into workflows
-
----
-
-### Stage 6: Package as Claude Skill (Optional, Later)
-
-**What**: Wrap Stages 3-5 as a reusable Claude Skill
-
-**Why later**:
-- Skill useful once agent is proven and stable
-- Requires understanding SKILL.md format
-- Not needed for local POC validation
-
-**Will add**: `.claude/skills/agentic-analytics/SKILL.md`
+- **Multi-tool agents**: Coordinating multiple tool calls in sequence
+- **Tool chaining**: SQL data → Chart visualization
+- **LLM-guided visualization**: Claude chooses optimal chart type for data
 
 ---
 
@@ -645,66 +478,20 @@ Answer: Sales showed steady growth in West region, while Central region remained
 deactivate
 ```
 
-### Run Scripts (By Stage)
-
-**Stage 0: Setup**
+### Run Scripts
 ```powershell
-# Activate virtual environment
-& .venv\Scripts\Activate.ps1
-```
+# Stage 1: Download
+& .venv\Scripts\python.exe analytics/01_download_dataset.py
 
-**Stage 1: Download Dataset**
-```powershell
-# Download from Kaggle (one-time)
-& .venv\Scripts\python.exe stages/stage_1/01_download_dataset.py
-```
+# Stage 2: Load DuckDB
+& .venv\Scripts\python.exe analytics/02_load_duckdb.py
 
-**Stage 2: Load into DuckDB**
-```powershell
-# Option A: Full load from CSV
-& .venv\Scripts\python.exe stages/stage_2/02_load_duckdb.py
+# Stage 3: Generate metadata draft
+& .venv\Scripts\python.exe analytics/03_generate_metadata_draft.py
 
-# Option B: Quick setup (recommended)
-& .venv\Scripts\python.exe stages/stage_2/setup_dataset.py
-```
-
-**Stage 3: Generate Metadata**
-```powershell
-# Auto-generate metadata draft
-& .venv\Scripts\python.exe stages/stage_3/03_generate_metadata_draft.py
-```
-
-**Stage 4: Run Agent**
-```powershell
-# Set API key
-$env:ANTHROPIC_API_KEY = "sk-ant-your-key"
-
-# Run agent
-& .venv\Scripts\python.exe stages/stage_4/agent.py
-
-# Validate results (compare agent vs direct SQL)
-& .venv\Scripts\python.exe stages/stage_4/validate_agent.py
-```
-
-**Stage 5: Run Agent with Charts**
-```powershell
-$env:ANTHROPIC_API_KEY = "sk-ant-your-key"
-& .venv\Scripts\python.exe stages/stage_5/agent_with_charts.py
-```
-
-**Stage 0B: Dynamic Dataset Selection (Optional)**
-```powershell
-# Use any Kaggle dataset
-& .venv\Scripts\python.exe analytics/dynamic_dataset_selector.py superstore
-```
-
-**Utilities**
-```powershell
-# Interactive SQL shell
-& .venv\Scripts\python.exe sql_shell.py
-
-# Direct SQL (no API key needed)
-& .venv\Scripts\python.exe run_query.py
+# Stage 4: Run agent (with integrated charting)
+$env:ANTHROPIC_API_KEY = "sk-ant-xxx"
+& .venv\Scripts\python.exe analytics/agent.py
 ```
 
 ### Interactive SQL
@@ -760,7 +547,7 @@ print(f'✓ {result[0][0]} rows')
 **Claude API**:
 - Set `ANTHROPIC_API_KEY` environment variable
 - Get key from: https://console.anthropic.com/
-- Used in Stages 4-5
+- Used in Stage 4 (agent + charting)
 
 ---
 
@@ -783,84 +570,31 @@ print(f'✓ {result[0][0]} rows')
 
 ---
 
-## Files Reference (Organized by Stage)
+## Files Reference
 
-### 📖 Documentation
-| File | Purpose | Status |
-|------|---------|--------|
-| `README.md` | Complete step-by-step guide (START HERE) | ✅ Done |
-| `STAGE_1_SETUP.md` | Stage 1: Download dataset details | ✅ Done |
-| `STAGE_2_SETUP.md` | Stage 2: DuckDB loading details | ✅ Done |
-| `STAGE_3_SETUP.md` | Stage 3: Metadata generation details | ✅ Done |
-| `STAGE_4_SETUP.md` | Stage 4: Agent architecture details | ✅ Done |
-| `STAGE_5_SETUP.md` | Stage 5: Charting integration details | ✅ Done |
-| `STAGE_0B_DYNAMIC_DATASETS.md` | Stage 0B: Dynamic dataset selection | ✅ Done |
-
-### 📥 Stage 1: Download Dataset
-| File | Purpose | Status |
-|------|---------|--------|
-| `stages/stage_1/01_download_dataset.py` | Download Superstore from Kaggle | ✅ Done |
-| `stages/stage_1/STAGE_1_SETUP.md` | Stage 1 documentation | ✅ Done |
-| `data/raw/Sample - Superstore.csv` | Downloaded data (2.3 MB, 9,994 rows) | ✅ Done |
-| `data/sample/superstore_sample.csv` | Sample fixture (200 rows for testing) | ✅ Done |
-
-### 💾 Stage 2: Load into DuckDB
-| File | Purpose | Status |
-|------|---------|--------|
-| `stages/stage_2/02_load_duckdb.py` | Load CSV into DuckDB (full dataset) | ✅ Done |
-| `stages/stage_2/setup_dataset.py` | Quick setup without download | ✅ Done |
-| `stages/stage_2/STAGE_2_SETUP.md` | Stage 2 documentation | ✅ Done |
-| `data/processed/superstore.duckdb` | DuckDB database (queryable) | ✅ Done |
-
-### 📋 Stage 3: Metadata Layer
-| File | Purpose | Status |
-|------|---------|--------|
-| `stages/stage_3/03_generate_metadata_draft.py` | Auto-generate metadata from schema | ✅ Done |
-| `stages/stage_3/STAGE_3_SETUP.md` | Stage 3 documentation | ✅ Done |
-| `analytics/metadata/orders.yaml` | Hand-edited metadata (21 columns) | ✅ Done |
-
-### 🤖 Stage 4: Text-to-SQL Agent
-| File | Purpose | Status |
-|------|---------|--------|
-| `stages/stage_4/agent.py` | Main agent loop (Claude Haiku 4.5) | ✅ Done |
-| `stages/stage_4/validate_agent.py` | Validation: Compare agent vs direct SQL | ✅ Done |
-| `stages/stage_4/STAGE_4_SETUP.md` | Stage 4 documentation | ✅ Done |
-
-### 📊 Stage 5: Charting
-| File | Purpose | Status |
-|------|---------|--------|
-| `stages/stage_5/agent_with_charts.py` | Agent + matplotlib visualization | ✅ Done |
-| `stages/stage_5/STAGE_5_SETUP.md` | Stage 5 documentation | ✅ Done |
-| `analytics/output/` | Generated PNG charts (timestamped) | ✅ Done |
-
-### 🔧 Utilities
-| File | Purpose | Status |
-|------|---------|--------|
-| `sql_shell.py` | Interactive SQL terminal | ✅ Done |
-| `run_query.py` | Direct SQL queries (no API key) | ✅ Done |
-| `.gitignore` | Git ignore rules | ✅ Done |
+| File | Purpose | Stage | Status |
+|------|---------|-------|--------|
+| `STAGE_1_SETUP.md` | Stage 1 documentation | 1 | ✅ Done |
+| `STAGE_2_SETUP.md` | Stage 2 documentation | 2 | ✅ Done |
+| `STAGE_3_SETUP.md` | Stage 3 documentation | 3 | ✅ Done |
+| `STAGE_4_SETUP.md` | Stage 4 documentation (SQL + Charts) | 4 | ✅ Done |
+| `analytics/01_download_dataset.py` | Download from Kaggle | 1 | ✅ Done |
+| `analytics/02_load_duckdb.py` | Load into DuckDB | 2 | ✅ Done |
+| `analytics/03_generate_metadata_draft.py` | Auto-generate metadata | 3 | ✅ Done |
+| `analytics/metadata/orders.yaml` | Hand-edited metadata | 3 | ✅ Done |
+| `analytics/agent.py` | Text-to-SQL agent + charting (Haiku) | 4 | ✅ Done |
+| `analytics/output/` | Generated chart PNGs | 4 | ✅ Ready |
+| `sql_shell.py` | Interactive SQL | All | ✅ Done |
+| `.gitignore` | Git ignore rules | All | ✅ Done |
 
 ---
 
----
+## Next Session
 
-## 🎉 Project Completion Status
-
-**All 5 stages complete!**
-
-| Stage | Status | Key File |
-|-------|--------|----------|
-| 0 | ✅ Environment | `.venv/` + dependencies |
-| 1 | ✅ Data Download | `analytics/01_download_dataset.py` |
-| 2 | ✅ Database Load | `analytics/02_load_duckdb.py` |
-| 3 | ✅ Metadata | `analytics/metadata/orders.yaml` |
-| 4 | ✅ Agent + Validation | `analytics/agent.py` + `validate_agent.py` |
-| 5 | ✅ Charting | `analytics/agent_with_charts.py` |
-
-**Next Steps**:
-- Run `analytics/agent_with_charts.py` to start asking questions
-- Use `validate_agent.py` to verify results
-- Read `README.md` for detailed walkthroughs
-- Refer to `STAGE_X_SETUP.md` files for deep dives
+When you return:
+1. This file will load automatically
+2. Refer to the stage you want to run
+3. Follow the "Run" command for that stage
+4. All prerequisites will be listed clearly
 
 Good luck! 🚀
