@@ -223,13 +223,7 @@ if user_input:
                         )
 
                     with col2:
-                        excel_data, excel_filename = export_to_excel(results_df)
-                        st.download_button(
-                            label="📊 Download Excel",
-                            data=excel_data,
-                            file_name=excel_filename,
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                        )
+                        st.info("Excel download available locally")
 
                     with col3:
                         st.metric("Rows", len(results_df))
