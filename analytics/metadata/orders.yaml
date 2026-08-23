@@ -1,0 +1,141 @@
+table: orders
+description: >
+  One row per line item in a retail order. Grain is order-line (not order).
+  An order with 3 products spans 3 rows sharing the same Order ID.
+  Data covers US retail sales 2015-2016.
+  Captures sales, profit, discounts, and returns across 3 product categories.
+columns:
+  row id:
+    type: BIGINT
+    role: id
+    unit: null
+    distinct_count: 9994
+    description: Unique row identifier within this dataset (one per line item)
+  order id:
+    type: VARCHAR
+    role: id
+    unit: null
+    distinct_count: 5009
+    description: Groups line items into one order (not unique per row, can repeat for multi-item orders)
+  order date:
+    type: VARCHAR
+    role: timestamp
+    unit: null
+    distinct_count: 1237
+    description: When the order was placed (format MM/DD/YYYY, stored as string)
+  ship date:
+    type: VARCHAR
+    role: timestamp
+    unit: null
+    distinct_count: 1334
+    description: When the order shipped (format MM/DD/YYYY, stored as string)
+  ship mode:
+    type: VARCHAR
+    role: dimension
+    unit: null
+    distinct_count: 4
+    description: Delivery method; one of Same Day, One Day, Second Class, Standard Class
+  customer id:
+    type: VARCHAR
+    role: id
+    unit: null
+    distinct_count: 793
+    description: Unique customer identifier
+  customer name:
+    type: VARCHAR
+    role: dimension
+    unit: null
+    distinct_count: 793
+    description: Full name of customer
+  segment:
+    type: VARCHAR
+    role: dimension
+    unit: null
+    distinct_count: 3
+    description: Customer segment; one of Consumer, Corporate, or Home Office
+  country:
+    type: VARCHAR
+    role: dimension
+    unit: null
+    distinct_count: 1
+    description: Country of order (always United States in this dataset)
+  city:
+    type: VARCHAR
+    role: dimension
+    unit: null
+    distinct_count: 531
+    description: City where order shipped to
+  state:
+    type: VARCHAR
+    role: dimension
+    unit: null
+    distinct_count: 49
+    description: US state code (2-letter) where order shipped to
+  postal code:
+    type: BIGINT
+    role: dimension
+    unit: null
+    distinct_count: 631
+    description: US ZIP code where order shipped to (stored as number, may lose leading zeros)
+  region:
+    type: VARCHAR
+    role: dimension
+    unit: null
+    distinct_count: 4
+    description: US region; one of East, West, Central, or South
+  product id:
+    type: VARCHAR
+    role: id
+    unit: null
+    distinct_count: 1862
+    description: Unique product identifier
+  category:
+    type: VARCHAR
+    role: dimension
+    unit: null
+    distinct_count: 3
+    description: Product category; one of Furniture, Office Supplies, or Technology
+  sub-category:
+    type: VARCHAR
+    role: dimension
+    unit: null
+    distinct_count: 17
+    description: Detailed product subcategory (e.g., Chairs, Tables, Bookcases, Copiers, Phones)
+  product name:
+    type: VARCHAR
+    role: dimension
+    unit: null
+    distinct_count: 1850
+    description: Full product name/description
+  sales:
+    type: DOUBLE
+    role: measure
+    unit: usd
+    distinct_count: 5825
+    description: Revenue for this line item before discount (in USD)
+  quantity:
+    type: BIGINT
+    role: measure
+    unit: count
+    distinct_count: 14
+    description: Number of units ordered for this line item
+  discount:
+    type: DOUBLE
+    role: measure
+    unit: percent
+    distinct_count: 12
+    description: Discount applied to line item (0.0 = no discount, 0.5 = 50% off)
+  profit:
+    type: DOUBLE
+    role: measure
+    unit: usd
+    distinct_count: 7287
+    description: Profit after discount and costs (in USD; can be negative due to returns/deep discounts)
+relationships: []
+
+notable_values:
+  - Profit can be negative — don't assume SUM(profit) > 0
+  - Order ID is not unique per row — use (order_id, product_id) to uniquely identify a line item
+  - Dates are stored as VARCHAR strings (MM/DD/YYYY), not DATE type
+  - Discount can exceed sales value on loss-making items
+  - All orders are US-based (Country = United States)
