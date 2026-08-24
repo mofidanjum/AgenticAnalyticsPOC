@@ -71,6 +71,55 @@ def get_connection():
 
 con = get_connection()
 
+# Sidebar for auto-commands
+with st.sidebar:
+    st.markdown("### 🤖 Quick Commands")
+    st.markdown("---")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("🔄 Refresh Data", use_container_width=True, key="refresh_btn"):
+            st.info("🔄 Refreshing data from Kaggle...")
+            import subprocess
+            steps = [
+                ("📥 Downloading", "python analytics/01_download_dataset.py"),
+                ("📚 Loading DB", "python analytics/02_load_duckdb.py"),
+                ("📝 Metadata", "python analytics/03_generate_metadata_draft.py"),
+            ]
+            for step_name, cmd in steps:
+                st.write(f"{step_name}...")
+                result = subprocess.run(cmd, shell=True, capture_output=True)
+                if result.returncode == 0:
+                    st.write(f"✅ {step_name} Done")
+                else:
+                    st.error(f"❌ {step_name} Failed")
+            st.success("✅ Data Refresh Complete! Reload page to see updates.")
+
+    with col2:
+        if st.button("🧪 Verify Data", use_container_width=True, key="verify_btn"):
+            try:
+                result = con.sql('SELECT COUNT(*) as rows FROM orders').fetchall()
+                rows = result[0][0]
+                st.success(f"✅ Data OK\n📊 {rows:,} rows")
+            except Exception as e:
+                st.error(f"❌ Error: {e}")
+
+    st.markdown("---")
+
+    if st.button("🚀 Deploy to Cloud", use_container_width=True, key="deploy_btn"):
+        st.info("🚀 Deploying to Streamlit Cloud...")
+        import subprocess
+        result = subprocess.run("git add . && git commit -m 'Auto-deploy' && git push origin main", shell=True, capture_output=True)
+        if result.returncode == 0:
+            st.success("✅ Deployed! Check Streamlit Cloud in 2-3 minutes.")
+        else:
+            st.error("❌ Deployment failed. Check git config.")
+
+    st.markdown("---")
+    st.caption("Just click buttons above!")
+
+
 st.markdown("""
 <style>
 .block-container { padding-top: 1rem !important; }
