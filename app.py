@@ -260,26 +260,26 @@ with tab1:
 
                 client = Anthropic(api_key=api_key)
 
-                system_prompt = """You are a data visualization expert. The user has sales data with columns:
-Row ID, Order ID, Order Date, Ship Date, Ship Mode, Customer ID, Customer Name, Segment, Country, City, State,
-Postal Code, Region, Product ID, Category, Sub-Category, Product Name, Sales, Quantity, Discount, Profit
+                system_prompt = """You are a Python/Plotly visualization expert. Write ONLY valid Python code, no explanations.
 
-Based on their request, create Python code using plotly to visualize the data.
-You can create:
-- Simple charts (bar, pie, scatter, line)
-- Complex dashboards with subplots (multiple charts in one figure)
-- Multi-dimensional visualizations
+The dataframe 'filtered_df' has these columns (use exact names with quotes):
+"Sales", "Profit", "Region", "Category", "Segment", "Order Date", "Customer Name", "Quantity", "Discount", "Sub-Category"
 
-IMPORTANT:
-- Import: from plotly.subplots import make_subplots
-- Use: make_subplots() to create multi-chart dashboards
-- Use: fig.add_trace() to add data to subplots
-- Use: fig.update_layout() for styling
-- End with: st.plotly_chart(fig, use_container_width=True)
+Rules:
+1. Start with: import plotly.express as px
+2. For simple charts: use px.bar(), px.pie(), px.scatter(), px.line()
+3. For dashboards: use make_subplots() from plotly.subplots
+4. Always end with: st.plotly_chart(fig, use_container_width=True)
+5. Use column names EXACTLY as shown above
+6. Group/aggregate data with .groupby() before plotting
+7. Handle NaN values with .dropna()
 
-Return ONLY valid Python code. No explanations, no markdown.
-The dataframe is available as 'filtered_df'.
-Use st.plotly_chart() to display, not fig.show()"""
+Examples:
+- Bar chart: fig = px.bar(filtered_df.groupby("Region")["Sales"].sum(), title="Sales by Region")
+- Pie chart: fig = px.pie(filtered_df, values="Sales", names="Region", title="Sales by Region")
+- Subplots: from plotly.subplots import make_subplots; fig = make_subplots(rows=1, cols=2); fig.add_trace(...)
+
+Return ONLY Python code. No markdown, no explanations, no comments."""
 
                 response = client.messages.create(
                     model="claude-haiku-4-5-20251001",
@@ -292,6 +292,16 @@ Use st.plotly_chart() to display, not fig.show()"""
 
                 if code:
                     try:
+                        # Clean up code (remove markdown if present)
+                        code = code.strip()
+                        if code.startswith("```python"):
+                            code = code[9:]
+                        if code.startswith("```"):
+                            code = code[3:]
+                        if code.endswith("```"):
+                            code = code[:-3]
+                        code = code.strip()
+
                         # Execute the code
                         from plotly.subplots import make_subplots
                         exec_globals = {
@@ -300,13 +310,23 @@ Use st.plotly_chart() to display, not fig.show()"""
                             "go": go,
                             "st": st,
                             "make_subplots": make_subplots,
-                            "pd": pd
+                            "pd": pd,
+                            "import": __import__
                         }
                         exec(code, exec_globals)
                         st.success("✅ Visualization created!")
+                    except SyntaxError as e:
+                        st.error(f"❌ Syntax Error in generated code")
+                        col1, col2 = st.columns([1, 1])
+                        with col1:
+                            st.write("**Error:**")
+                            st.text(f"Line {e.lineno}: {e.msg}")
+                        with col2:
+                            st.write("**Code:**")
+                            st.code(code, language="python")
                     except Exception as e:
-                        st.error(f"Visualization error: {e}")
-                        with st.expander("Debug: Show generated code"):
+                        st.error(f"❌ Runtime Error: {type(e).__name__}: {e}")
+                        with st.expander("Show generated code"):
                             st.code(code, language="python")
                 else:
                     st.error("No code generated")
