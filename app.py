@@ -33,25 +33,6 @@ p { margin: 0.2rem 0 !important; }
 st.title("🤖 Agentic Analytics POC")
 st.write("Superstore Sales Data • Powered by Claude AI")
 
-# POC Flow
-st.markdown("""
-<div style="background: linear-gradient(90deg, #1a1f3a 0%, #0a0e27 50%, #1a1f3a 100%);
-            padding: 1.2rem; border-radius: 0.5rem; border-left: 4px solid #6366f1; margin-bottom: 1rem; margin-top: -0.5rem;">
-    <p style="margin: 0.5rem 0; font-size: 0.9rem; color: #f1f5f9; font-weight: 600;">
-        <strong>📥 Source:</strong> DuckDB (Superstore Dataset)
-    </p>
-    <p style="margin: 0.5rem 0; font-size: 0.9rem; color: #f1f5f9; font-weight: 600;">
-        <strong>📚 Metadata Layer:</strong> YAML Schema (Column Descriptions & Constraints)
-    </p>
-    <p style="margin: 0.5rem 0; font-size: 0.9rem; color: #f1f5f9; font-weight: 600;">
-        <strong>🤖 Claude AI:</strong> Natural Language → SQL Translation & Analysis
-    </p>
-    <p style="margin: 0.5rem 0; font-size: 0.9rem; color: #f1f5f9; font-weight: 600;">
-        <strong>🎯 Target:</strong> Interactive Dashboards (Visual, Data, SQL Queries)
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
 @st.cache_resource
 def get_connection():
     try:
