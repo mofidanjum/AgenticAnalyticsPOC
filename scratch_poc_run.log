@@ -1,0 +1,457 @@
+﻿============================================================
+Analytics Agent with Charting - Test Mode
+============================================================
+
+📊 User: Show me sales by region in a bar chart
+
+🔍 SQL: SELECT region, SUM(sales) as total_sales FROM orders GROUP BY region ORDER BY total_sales DESC
+
+📈 Results:
+    Region  total_sales
+0     West  725457.8245
+1     East  678781.2400
+2  Central  501239.8908
+3    South  391721.9050
+
+📊 Chart saved to analytics\output\chart_20260824_114218.png
+
+💬 Answer: Here's your sales by region breakdown:
+
+**Sales Summary by Region:**
+- **West**: $725,457.82 (highest)
+- **East**: $678,781.24
+- **Central**: $501,239.89
+- **South**: $391,721.91 (lowest)
+
+The West region leads in sales, generating about $46.7K more than the East region, and significantly outperforms the Central and South regions. The South region has the lowest sales at approximately $391.7K.
+
+============================================================
+
+📊 User: What are profit trends by category?
+
+🔍 SQL: 
+SELECT 
+  category,
+  SUM(profit) as total_profit,
+  AVG(profit) as avg_profit,
+  COUNT(*) as line_items
+FROM orders
+GROUP BY category
+ORDER BY category
+
+
+📈 Results:
+          Category  total_profit  avg_profit  line_items
+0        Furniture    18451.2728    8.699327        2121
+1  Office Supplies   122490.8008   20.327050        6026
+2       Technology   145454.9481   78.752002        1847
+
+🔍 SQL: 
+SELECT 
+  category,
+  SUBSTR(order_date, 7, 4) as year,
+  SUBSTR(order_date, 1, 2) as month,
+  SUM(profit) as monthly_profit
+FROM orders
+GROUP BY category, year, month
+ORDER BY year, month, category
+
+
+📈 Results:
+SQL Error: Binder Error: Referenced column "order_date" not found in FROM clause!
+Candidate bindings: "Order Date", "Order ID", "Product Name", "Customer Name", "Ship Date"
+
+🔍 SQL: 
+SELECT 
+  category,
+  SUBSTR("Order Date", 7, 4) as year,
+  SUBSTR("Order Date", 1, 2) as month,
+  SUM(profit) as monthly_profit
+FROM orders
+GROUP BY category, year, month
+ORDER BY year, month, category
+
+
+📈 Results:
+            Category  year month  monthly_profit
+0          Furniture   014    1/        112.7683
+1    Office Supplies   014    1/        567.7288
+2         Technology   014    1/        528.2402
+3          Furniture   014    10        -57.2565
+4    Office Supplies   014    10        266.9399
+5         Technology   014    10        162.8574
+6          Furniture   014    11       -280.2034
+7    Office Supplies   014    11        570.2619
+8         Technology   014    11       3357.5996
+9          Furniture   014    12        355.2222
+10   Office Supplies   014    12       1015.1953
+11        Technology   014    12        684.8066
+12         Furniture   014    2/        115.1589
+13   Office Supplies   014    2/         97.6327
+14        Technology   014    2/        211.9788
+15         Furniture   014    3/       -788.4175
+16   Office Supplies   014    3/       1513.4212
+17        Technology   014    3/        141.0535
+18         Furniture   014    4/        175.5471
+19   Office Supplies   014    4/        471.5122
+20        Technology   014    4/        998.9099
+21         Furniture   014    5/       -559.9269
+22   Office Supplies   014    5/       1481.0332
+23        Technology   014    5/        967.0090
+24         Furniture   014    6/         41.9420
+25   Office Supplies   014    6/       1840.8154
+26        Technology   014    6/        882.2143
+27         Furniture   014    7/        409.9387
+28   Office Supplies   014    7/      -2688.7312
+29        Technology   014    7/        836.1360
+30         Furniture   014    8/        351.7523
+31   Office Supplies   014    8/        746.6944
+32        Technology   014    8/        707.6146
+33         Furniture   014    9/       1132.6508
+34   Office Supplies   014    9/       6146.0102
+35        Technology   014    9/       1907.8296
+36         Furniture   015    1/      -2394.6076
+37   Office Supplies   015    1/        298.2000
+38        Technology   015    1/         19.2527
+39         Furniture   015    10        -35.9544
+40   Office Supplies   015    10        373.9996
+41        Technology   015    10        698.8352
+42         Furniture   015    11       2575.9673
+43   Office Supplies   015    11       -703.9840
+44        Technology   015    11       4785.0617
+45         Furniture   015    12       1120.1558
+46   Office Supplies   015    12        221.3687
+47        Technology   015    12       1213.5532
+48         Furniture   015    2/        -13.5462
+49   Office Supplies   015    2/       1712.1056
+50        Technology   015    2/        479.9685
+51         Furniture   015    3/        832.3833
+52   Office Supplies   015    3/       5652.5553
+53        Technology   015    3/       2041.8636
+54         Furniture   015    4/        518.0275
+55   Office Supplies   015    4/       2508.3848
+56        Technology   015    4/       2036.8328
+57         Furniture   015    5/        779.4541
+58   Office Supplies   015    5/       1481.8862
+59        Technology   015    5/        649.5730
+60         Furniture   015    6/       -731.6976
+61   Office Supplies   015    6/       2314.1052
+62        Technology   015    6/       1023.7736
+63         Furniture   015    7/       -439.9164
+64   Office Supplies   015    7/        643.4466
+65        Technology   015    7/       1951.2098
+66         Furniture   015    8/       -115.5559
+67   Office Supplies   015    8/       1245.5884
+68        Technology   015    8/       2929.1095
+69         Furniture   015    9/       1212.3910
+70   Office Supplies   015    9/       1437.7657
+71        Technology   015    9/       4120.0870
+72         Furniture   016    1/       -484.6928
+73   Office Supplies   016    1/       1599.2805
+74        Technology   016    1/        409.5724
+75         Furniture   016    10         -4.5996
+76   Office Supplies   016    10        468.1251
+77        Technology   016    10      10161.2378
+78         Furniture   016    11       -191.8483
+79   Office Supplies   016    11       1635.5669
+80        Technology   016    11        541.7539
+81         Furniture   016    12        898.6387
+82   Office Supplies   016    12       4215.5720
+83        Technology   016    12       1716.7239
+84         Furniture   016    2/        169.4454
+85   Office Supplies   016    2/        692.7624
+86        Technology   016    2/        114.0303
+87         Furniture   016    3/         46.4797
+88   Office Supplies   016    3/       1139.9876
+89        Technology   016    3/        320.9334
+90         Furniture   016    4/       -613.8466
+91   Office Supplies   016    4/        570.7426
+92        Technology   016    4/       2652.1507
+93         Furniture   016    5/       1482.1612
+94   Office Supplies   016    5/       2117.8702
+95        Technology   016    5/       3403.3842
+96         Furniture   016    6/        132.3739
+97   Office Supplies   016    6/       1862.3669
+98        Technology   016    6/       1390.8599
+99         Furniture   016    7/        586.2849
+100  Office Supplies   016    7/        704.6290
+101       Technology   016    7/        684.0050
+102        Furniture   016    8/       -571.5777
+103  Office Supplies   016    8/       1205.0381
+104       Technology   016    8/        639.6911
+105        Furniture   016    9/       1087.4899
+106  Office Supplies   016    9/       1952.9967
+107       Technology   016    9/       2665.8751
+108        Furniture   017    1/         56.0279
+109  Office Supplies   017    1/       2881.2660
+110       Technology   017    1/       3261.4581
+111        Furniture   017    10      -1861.1388
+112  Office Supplies   017    10       1688.7392
+113       Technology   017    10       2764.8471
+114        Furniture   017    11        794.0506
+115  Office Supplies   017    11       1784.1008
+116       Technology   017    11      -2029.6852
+117        Furniture   017    12        755.7692
+118  Office Supplies   017    12      -1922.0285
+119       Technology   017    12       2542.1490
+120        Furniture   017    2/       -328.0697
+121  Office Supplies   017    2/        971.6113
+122       Technology   017    2/        708.3640
+123        Furniture   017    3/        945.2424
+124  Office Supplies   017    3/       1713.9150
+125       Technology   017    3/      10199.6635
+126        Furniture   017    4/        213.9763
+127  Office Supplies   017    4/        677.0596
+128       Technology   017    4/      -3227.5673
+129        Furniture   017    5/        140.8106
+130  Office Supplies   017    5/       2617.9734
+131       Technology   017    5/       1768.6573
+132        Furniture   017    6/        430.0939
+133  Office Supplies   017    6/       2432.7142
+134       Technology   017    6/       3376.8623
+135        Furniture   017    7/        397.7853
+136  Office Supplies   017    7/       1649.7501
+137       Technology   017    7/       2566.6728
+138        Furniture   017    8/        275.6236
+139  Office Supplies   017    8/       5078.9627
+140       Technology   017    8/       2508.9577
+141        Furniture   017    9/       1897.5343
+142  Office Supplies   017    9/       2127.9687
+143       Technology   017    9/       3034.1990
+144        Furniture    14    1/        692.6982
+145  Office Supplies    14    1/        221.2218
+146       Technology    14    1/        327.5334
+147        Furniture    14    2/          5.5328
+148  Office Supplies    14    2/         78.4583
+149       Technology    14    2/        353.5469
+150        Furniture    14    3/       -340.2375
+151  Office Supplies    14    3/       -243.0079
+152       Technology    14    3/        215.9181
+153        Furniture    14    4/        378.8330
+154  Office Supplies    14    4/        528.6964
+155       Technology    14    4/        935.3366
+156        Furniture    14    5/        210.0493
+157  Office Supplies    14    5/        266.1712
+158       Technology    14    5/        374.3738
+159        Furniture    14    6/        554.3733
+160  Office Supplies    14    6/       1190.6172
+161       Technology    14    6/        466.5622
+162        Furniture    14    7/        -35.6920
+163  Office Supplies    14    7/        206.7140
+164       Technology    14    7/        430.1519
+165        Furniture    14    8/        311.7194
+166  Office Supplies    14    8/       2020.9063
+167       Technology    14    8/       1179.4180
+168        Furniture    14    9/        725.9468
+169  Office Supplies    14    9/        553.5300
+170       Technology    14    9/      -2137.8680
+171        Furniture    15    1/       -619.5924
+172  Office Supplies    15    1/        291.6969
+173       Technology    15    1/       -875.9566
+174        Furniture    15    2/        408.4410
+175  Office Supplies    15    2/        101.9962
+176       Technology    15    2/        124.8857
+177        Furniture    15    3/        622.6740
+178  Office Supplies    15    3/       -244.7071
+179       Technology    15    3/        827.3287
+180        Furniture    15    4/       -179.3773
+181  Office Supplies    15    4/      -1031.0252
+182       Technology    15    4/        334.6536
+183        Furniture    15    5/        121.1306
+184  Office Supplies    15    5/        249.7277
+185       Technology    15    5/       1386.0974
+186        Furniture    15    6/        319.0379
+187  Office Supplies    15    6/       -118.7188
+188       Technology    15    6/        529.0569
+189        Furniture    15    7/        114.8226
+190  Office Supplies    15    7/        470.3363
+191       Technology    15    7/        548.7494
+192        Furniture    15    8/       -371.9150
+193  Office Supplies    15    8/        963.1647
+194       Technology    15    8/        705.4167
+195        Furniture    15    9/        137.7275
+196  Office Supplies    15    9/        600.1180
+197       Technology    15    9/        701.0735
+198        Furniture    16    1/        788.6535
+199  Office Supplies    16    1/          5.1907
+200       Technology    16    1/        506.8190
+201        Furniture    16    2/        207.5898
+202  Office Supplies    16    2/        637.2385
+203       Technology    16    2/       3183.5131
+204        Furniture    16    3/       -601.7477
+205  Office Supplies    16    3/        -78.5820
+206       Technology    16    3/       2784.8970
+207        Furniture    16    4/        978.6800
+208  Office Supplies    16    4/      -1671.2247
+209       Technology    16    4/       1061.3129
+210        Furniture    16    5/        342.3127
+211  Office Supplies    16    5/        279.6322
+212       Technology    16    5/       1036.7859
+213        Furniture    16    6/       -238.6404
+214  Office Supplies    16    6/        605.1225
+215       Technology    16    6/        998.2953
+216        Furniture    16    7/        452.6224
+217  Office Supplies    16    7/        419.3312
+218       Technology    16    7/       1586.0054
+219        Furniture    16    8/         77.4320
+220  Office Supplies    16    8/        424.1532
+221       Technology    16    8/        287.3326
+222        Furniture    16    9/       -384.8874
+223  Office Supplies    16    9/       1761.0450
+224       Technology    16    9/       2246.1383
+225        Furniture    17    1/        -95.4681
+226  Office Supplies    17    1/        379.1807
+227       Technology    17    1/        657.9745
+228        Furniture    17    2/        129.0276
+229  Office Supplies    17    2/        -17.7860
+230       Technology    17    2/        150.7248
+231        Furniture    17    3/         55.6108
+232  Office Supplies    17    3/       1002.0474
+233       Technology    17    3/        835.4124
+234        Furniture    17    4/        -11.5139
+235  Office Supplies    17    4/       2693.5419
+236       Technology    17    4/        587.7934
+237        Furniture    17    5/       -213.6935
+238  Office Supplies    17    5/        535.7526
+239       Technology    17    5/       1493.0824
+240        Furniture    17    6/        474.9017
+241  Office Supplies    17    6/        946.2679
+242       Technology    17    6/        562.4957
+243        Furniture    17    7/        -73.1609
+244  Office Supplies    17    7/        913.5344
+245       Technology    17    7/       1498.0395
+246        Furniture    17    8/         46.6154
+247  Office Supplies    17    8/        988.8955
+248       Technology    17    8/        141.9008
+249        Furniture    17    9/       -348.8506
+250  Office Supplies    17    9/       2719.7751
+251       Technology    17    9/       1560.9291
+252        Furniture  2014    10        306.4210
+253  Office Supplies  2014    10        850.7007
+254       Technology  2014    10       1918.5948
+255        Furniture  2014    11        -17.6924
+256  Office Supplies  2014    11       3841.6941
+257       Technology  2014    11       1820.4671
+258        Furniture  2014    12       1656.5976
+259  Office Supplies  2014    12       1049.2000
+260       Technology  2014    12       4222.5482
+261        Furniture  2015    10       -569.5619
+262  Office Supplies  2015    10        716.9379
+263       Technology  2015    10       1633.1096
+264        Furniture  2015    11        416.0567
+265  Office Supplies  2015    11       3504.0129
+266       Technology  2015    11       1897.6738
+267        Furniture  2015    12       -691.3417
+268  Office Supplies  2015    12       2410.5722
+269       Technology  2015    12       3742.6577
+270        Furniture  2016    10       -140.0604
+271  Office Supplies  2016    10       4211.9299
+272       Technology  2016    10       1546.5097
+273        Furniture  2016    11       1011.6571
+274  Office Supplies  2016    11       3051.3581
+275       Technology  2016    11      -2037.0802
+276        Furniture  2016    12       1930.0328
+277  Office Supplies  2016    12       7251.0966
+278       Technology  2016    12       1873.2453
+279        Furniture  2017    10       -665.7815
+280  Office Supplies  2017    10       2352.0359
+281       Technology  2017    10       4996.5736
+282        Furniture  2017    11       -387.9869
+283  Office Supplies  2017    11       1825.0021
+284       Technology  2017    11       7704.6223
+285        Furniture  2017    12        390.9856
+286  Office Supplies  2017    12       3696.3417
+287       Technology  2017    12       3020.1298
+
+🔍 SQL: 
+SELECT 
+  category,
+  SUBSTR("Order Date", 7, 4) || '-' || SUBSTR("Order Date", 1, 2) as year_month,
+  SUM(profit) as total_profit
+FROM orders
+WHERE SUBSTR("Order Date", 7, 4) IN ('2015', '2016')
+GROUP BY category, SUBSTR("Order Date", 7, 4), SUBSTR("Order Date", 1, 2)
+ORDER BY year_month, category
+
+
+📈 Results:
+           Category year_month  total_profit
+0         Furniture    2015-10     -569.5619
+1   Office Supplies    2015-10      716.9379
+2        Technology    2015-10     1633.1096
+3         Furniture    2015-11      416.0567
+4   Office Supplies    2015-11     3504.0129
+5        Technology    2015-11     1897.6738
+6         Furniture    2015-12     -691.3417
+7   Office Supplies    2015-12     2410.5722
+8        Technology    2015-12     3742.6577
+9         Furniture    2016-10     -140.0604
+10  Office Supplies    2016-10     4211.9299
+11       Technology    2016-10     1546.5097
+12        Furniture    2016-11     1011.6571
+13  Office Supplies    2016-11     3051.3581
+14       Technology    2016-11    -2037.0802
+15        Furniture    2016-12     1930.0328
+16  Office Supplies    2016-12     7251.0966
+17       Technology    2016-12     1873.2453
+
+📊 Chart saved to analytics\output\chart_20260824_114232.png
+
+💬 Answer: ## Profit Trends by Category
+
+Based on the analysis of retail sales data from 2015-2016, here are the key profit trends:
+
+### Overall Profit Summary (All Years):
+1. **Technology**: **$145,454.95** (highest total profit)
+   - Average profit per line item: $78.75
+   - 1,847 line items
+   
+2. **Office Supplies**: **$122,490.80** (second highest)
+   - Average profit per line item: $20.33
+   - 6,026 line items
+   
+3. **Furniture**: **$18,451.27** (lowest)
+   - Average profit per line item: $8.70
+   - 2,121 line items
+
+### Key Insights:
+
+- **Technology** is the most profitable category with significantly higher profit margins ($78.75 average per line item), despite having fewer line items than Office Supplies.
+
+- **Office Supplies** generates the second-highest absolute profit due to high volume (6,026 line items), but with lower margins ($20.33 average per line item).
+
+- **Furniture** struggles with profitability, with the lowest total profit and average profit margins. This category shows particular volatility with multiple months of negative profits throughout both 2015-2016.
+
+- **Volatility**: Furniture shows the most inconsistent performance with negative profits in several months, while Technology generally demonstrates more stable profitability despite occasional downturns (like November 2016).
+
+The data suggests that while Technology is most profitable, Office Supplies contributes significantly to overall business profitability through sheer volume, while Furniture requires strategic review of pricing and cost management.
+
+============================================================
+
+📊 User: Create a pie chart of orders by segment
+
+🔍 SQL: SELECT segment, COUNT(DISTINCT order_id) as order_count FROM orders GROUP BY segment
+
+📈 Results:
+SQL Error: Binder Error: Referenced column "order_id" not found in FROM clause!
+Candidate bindings: "Order ID", "Order Date", "Customer ID", "Customer Name", "Region"
+
+🔍 SQL: SELECT segment, COUNT(DISTINCT "Order ID") as order_count FROM orders GROUP BY segment
+
+📈 Results:
+       Segment  order_count
+0    Corporate         1514
+1  Home Office          909
+2     Consumer         2586
+
+📊 Chart saved to analytics\output\chart_20260824_114242.png
+
+💬 Answer: Perfect! I've created a pie chart showing orders by segment. Here's what the data shows:
+
+- **Consumer**: 2,586 orders (54.8%)
+- **Corporate**: 1,514 orders (32.2%)
+- **Home Office**: 909 orders (19.3%)
+
+The Consumer segment dominates with more than half of all orders, followed by Corporate and Home Office segments.
+
+============================================================

@@ -1,0 +1,14 @@
+﻿.venv\Scripts\python.exe : 2026-08-24 12:09:20.482 Uvicorn server started on :::8501
+At line:1 char:354
++ ... -pipeline"; .venv\Scripts\python.exe -m streamlit run app.py 2>&1 | T ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (2026-08-24 12:0...rted on :::8501:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://192.168.0.105:8501
+  External URL: http://106.51.208.221:8501
+
