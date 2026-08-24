@@ -233,14 +233,14 @@ tab1, tab2, tab3 = st.tabs(["📊 Visual", "📋 Data", "🔍 SQL"])
 
 # ===== TAB 1: VISUAL =====
 with tab1:
-    st.subheader("📊 Build Visualizations")
+    st.subheader("📊 Build Visualizations with Claude")
 
     col1, col2 = st.columns([3, 1])
 
     with col1:
         user_request = st.text_area(
             "What visualization would you like?",
-            placeholder="e.g., 'Show sales by region', 'Create a pie chart of profit by category', 'Display top 10 states by sales'",
+            placeholder="e.g., 'Build a complete dashboard with sales by region, category, and segment', 'Create subplots showing profit trends and top customers', 'Show me sales comparison across all dimensions'",
             height=80,
             key="viz_request"
         )
@@ -261,16 +261,29 @@ with tab1:
                 client = Anthropic(api_key=api_key)
 
                 system_prompt = """You are a data visualization expert. The user has sales data with columns:
-Sales, Profit, Region, Category, Segment, Order Date, Ship Date, Quantity, Discount, Customer Name, etc.
+Row ID, Order ID, Order Date, Ship Date, Ship Mode, Customer ID, Customer Name, Segment, Country, City, State,
+Postal Code, Region, Product ID, Category, Sub-Category, Product Name, Sales, Quantity, Discount, Profit
 
 Based on their request, create Python code using plotly to visualize the data.
-Return ONLY valid Python code that creates a plotly figure. No explanations, no markdown.
+You can create:
+- Simple charts (bar, pie, scatter, line)
+- Complex dashboards with subplots (multiple charts in one figure)
+- Multi-dimensional visualizations
+
+IMPORTANT:
+- Import: from plotly.subplots import make_subplots
+- Use: make_subplots() to create multi-chart dashboards
+- Use: fig.add_trace() to add data to subplots
+- Use: fig.update_layout() for styling
+- End with: st.plotly_chart(fig, use_container_width=True)
+
+Return ONLY valid Python code. No explanations, no markdown.
 The dataframe is available as 'filtered_df'.
-End with: fig.show()"""
+Use st.plotly_chart() to display, not fig.show()"""
 
                 response = client.messages.create(
                     model="claude-haiku-4-5-20251001",
-                    max_tokens=1000,
+                    max_tokens=2000,
                     system=system_prompt,
                     messages=[{"role": "user", "content": user_request}]
                 )
@@ -280,12 +293,21 @@ End with: fig.show()"""
                 if code:
                     try:
                         # Execute the code
-                        exec_globals = {"filtered_df": filtered_df, "px": px, "go": go, "st": st}
+                        from plotly.subplots import make_subplots
+                        exec_globals = {
+                            "filtered_df": filtered_df,
+                            "px": px,
+                            "go": go,
+                            "st": st,
+                            "make_subplots": make_subplots,
+                            "pd": pd
+                        }
                         exec(code, exec_globals)
                         st.success("✅ Visualization created!")
                     except Exception as e:
                         st.error(f"Visualization error: {e}")
-                        st.text(code)
+                        with st.expander("Debug: Show generated code"):
+                            st.code(code, language="python")
                 else:
                     st.error("No code generated")
 
