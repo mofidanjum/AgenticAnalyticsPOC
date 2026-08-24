@@ -187,7 +187,7 @@ tab1, tab2, tab3 = st.tabs(["📊 Visual", "📋 Data", "🔍 SQL"])
 
 # ===== TAB 1: VISUAL =====
 with tab1:
-    st.subheader("📊 Build Visualizations with Claude")
+    st.subheader("💬 User Query")
 
     # Example prompts
     st.markdown("""
@@ -205,7 +205,7 @@ with tab1:
 
     with col1:
         user_request = st.text_area(
-            "📝 Describe what you want to visualize:",
+            "📝 Enter your query:",
             placeholder="e.g., 'Show sales by region', 'Create pie chart of profit by category', 'Display top customers'",
             height=100,
             key="viz_request"
@@ -215,19 +215,32 @@ with tab1:
         st.write("")
         st.write("")
         st.write("")
-        build_viz = st.button("🎨 Build", use_container_width=True, key="build_viz_btn")
+        build_viz = st.button("🔍 Query", use_container_width=True, key="build_viz_btn")
 
     if build_viz and user_request:
         with st.spinner("🤖 Claude is creating visualization..."):
             try:
                 api_key = st.secrets.get("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY"))
                 if not api_key:
-                    st.error("❌ API Key not found")
-                    st.stop()
+                    st.error("❌ API Key not configured")
+                    st.info("""
+                    **To use Claude AI features:**
 
-                client = Anthropic(api_key=api_key)
+                    **Local**: Set environment variable:
+                    ```
+                    $env:ANTHROPIC_API_KEY = "sk-ant-YOUR_KEY"
+                    ```
 
-                system_prompt = """You are a Python/Plotly visualization expert. Write ONLY valid Python code, no explanations.
+                    **Streamlit Cloud**: Add to Secrets:
+                    - Settings → Secrets
+                    - Add: ANTHROPIC_API_KEY = "sk-ant-YOUR_KEY"
+
+                    Get your API key: https://console.anthropic.com/
+                    """)
+                else:
+                    client = Anthropic(api_key=api_key)
+
+                    system_prompt = """You are a Python/Plotly visualization expert. Write ONLY valid Python code, no explanations.
 
 The dataframe 'filtered_df' has these columns (use exact names with quotes):
 "Sales", "Profit", "Region", "Category", "Segment", "Order Date", "Customer Name", "Quantity", "Discount", "Sub-Category"
@@ -248,55 +261,55 @@ Examples:
 
 Return ONLY Python code. No markdown, no explanations, no comments."""
 
-                response = client.messages.create(
-                    model="claude-haiku-4-5-20251001",
-                    max_tokens=2000,
-                    system=system_prompt,
-                    messages=[{"role": "user", "content": user_request}]
-                )
+                    response = client.messages.create(
+                        model="claude-haiku-4-5-20251001",
+                        max_tokens=2000,
+                        system=system_prompt,
+                        messages=[{"role": "user", "content": user_request}]
+                    )
 
-                code = next((b.text for b in response.content if hasattr(b, "text")), None)
+                    code = next((b.text for b in response.content if hasattr(b, "text")), None)
 
-                if code:
-                    try:
-                        # Clean up code (remove markdown if present)
-                        code = code.strip()
-                        if code.startswith("```python"):
-                            code = code[9:]
-                        if code.startswith("```"):
-                            code = code[3:]
-                        if code.endswith("```"):
-                            code = code[:-3]
-                        code = code.strip()
+                    if code:
+                        try:
+                            # Clean up code (remove markdown if present)
+                            code = code.strip()
+                            if code.startswith("```python"):
+                                code = code[9:]
+                            if code.startswith("```"):
+                                code = code[3:]
+                            if code.endswith("```"):
+                                code = code[:-3]
+                            code = code.strip()
 
-                        # Execute the code
-                        from plotly.subplots import make_subplots
-                        exec_globals = {
-                            "filtered_df": filtered_df,
-                            "px": px,
-                            "go": go,
-                            "st": st,
-                            "make_subplots": make_subplots,
-                            "pd": pd,
-                            "import": __import__
-                        }
-                        exec(code, exec_globals)
-                        st.success("✅ Visualization created!")
-                    except SyntaxError as e:
-                        st.error(f"❌ Syntax Error in generated code")
-                        col1, col2 = st.columns([1, 1])
-                        with col1:
-                            st.write("**Error:**")
-                            st.text(f"Line {e.lineno}: {e.msg}")
-                        with col2:
-                            st.write("**Code:**")
-                            st.code(code, language="python")
-                    except Exception as e:
-                        st.error(f"❌ Runtime Error: {type(e).__name__}: {e}")
-                        with st.expander("Show generated code"):
-                            st.code(code, language="python")
-                else:
-                    st.error("No code generated")
+                            # Execute the code
+                            from plotly.subplots import make_subplots
+                            exec_globals = {
+                                "filtered_df": filtered_df,
+                                "px": px,
+                                "go": go,
+                                "st": st,
+                                "make_subplots": make_subplots,
+                                "pd": pd,
+                                "import": __import__
+                            }
+                            exec(code, exec_globals)
+                            st.success("✅ Visualization created!")
+                        except SyntaxError as e:
+                            st.error(f"❌ Syntax Error in generated code")
+                            col1, col2 = st.columns([1, 1])
+                            with col1:
+                                st.write("**Error:**")
+                                st.text(f"Line {e.lineno}: {e.msg}")
+                            with col2:
+                                st.write("**Code:**")
+                                st.code(code, language="python")
+                        except Exception as e:
+                            st.error(f"❌ Runtime Error: {type(e).__name__}: {e}")
+                            with st.expander("Show generated code"):
+                                st.code(code, language="python")
+                    else:
+                        st.error("No code generated")
 
             except Exception as e:
                 st.error(f"Error: {e}")
@@ -313,11 +326,7 @@ with tab3:
 
     sql_query = st.text_area(
         "Enter SQL query:",
-        value=f"""SELECT * FROM orders
-WHERE "Region" IN ('{filter_regions}')
-AND "Category" IN ('{filter_categories}')
-AND "Segment" IN ('{filter_segments}')
-LIMIT 100""",
+        value="SELECT * FROM orders LIMIT 100",
         height=120,
         key="sql_input"
     )
