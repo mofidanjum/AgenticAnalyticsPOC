@@ -158,33 +158,88 @@ with st.sidebar:
             st.error(f"❌ Verification Error: {e}")
 
     if st.button("🚀 Deploy to Cloud", use_container_width=True):
-        st.info("📤 Deploying to Streamlit Cloud...")
+        deploy_status = st.empty()
+        deploy_status.info("📤 Deploying to Streamlit Cloud...")
+
         try:
-            # Stage files
-            subprocess.run(["git", "add", "."], check=True, capture_output=True)
+            # Step 1: Stage files
+            with st.spinner("📦 Staging files..."):
+                result = subprocess.run(
+                    ["git", "add", "."],
+                    capture_output=True,
+                    text=True,
+                    cwd=os.getcwd()
+                )
+                if result.returncode != 0:
+                    st.error(f"❌ Git add failed: {result.stderr}")
+                    st.stop()
 
-            # Commit
-            result = subprocess.run(
-                ["git", "commit", "-m", "Auto-deploy: Updated data and dashboard"],
-                capture_output=True,
-                text=True
-            )
+            # Step 2: Commit
+            with st.spinner("💾 Creating commit..."):
+                commit_result = subprocess.run(
+                    ["git", "commit", "-m", f"Auto-deploy: Updated dashboard at {pd.Timestamp.now()}"],
+                    capture_output=True,
+                    text=True,
+                    cwd=os.getcwd()
+                )
+                if commit_result.returncode != 0 and "nothing to commit" not in commit_result.stderr:
+                    st.error(f"❌ Commit failed: {commit_result.stderr}")
+                    st.stop()
 
-            # Push
-            push_result = subprocess.run(
-                ["git", "push", "origin", "main"],
-                capture_output=True,
-                text=True
-            )
+            # Step 3: Push to GitHub
+            with st.spinner("🚀 Pushing to GitHub..."):
+                push_result = subprocess.run(
+                    ["git", "push", "origin", "main"],
+                    capture_output=True,
+                    text=True,
+                    cwd=os.getcwd(),
+                    timeout=60
+                )
 
-            if push_result.returncode == 0:
-                st.success("✅ Deployed to Streamlit Cloud!")
-                st.info("📍 Your app will redeploy automatically")
-            else:
-                st.error("❌ Push failed")
-                st.text(push_result.stderr)
+                if push_result.returncode == 0:
+                    # Success!
+                    deploy_status.empty()
+
+                    st.success("✅ Successfully deployed to GitHub!")
+
+                    st.markdown("""
+                    ### 🎉 Deployment Complete!
+
+                    Your changes have been pushed to GitHub. Streamlit Cloud will now auto-redeploy.
+
+                    #### 📍 Your App URL:
+                    **https://agenticanalyticspc-[your-repo-name].streamlit.app**
+
+                    #### ⏱️ Timeline:
+                    - ✅ Code pushed to GitHub (just now)
+                    - ⏳ Streamlit Cloud detecting changes (1-2 minutes)
+                    - ⏳ Building and deploying (2-3 minutes)
+                    - ✅ App live (3-5 minutes total)
+
+                    #### 📌 Next Steps:
+                    1. Go to https://streamlit.io/cloud
+                    2. Find your app: `AgenticAnalyticsPOC`
+                    3. Wait for "Deployed" status
+                    4. Share the URL with your team!
+
+                    #### 🔑 Important:
+                    - Make sure you added `ANTHROPIC_API_KEY` to Streamlit Cloud secrets
+                    - Settings → Secrets → Add your API key
+                    """)
+
+                    st.info("💡 Streamlit Cloud auto-detects GitHub pushes and redeploys automatically. Check your app in 3-5 minutes!")
+
+                else:
+                    deploy_status.empty()
+                    st.error(f"❌ Push failed: {push_result.stderr}")
+                    if "Permission denied" in push_result.stderr or "authentication" in push_result.stderr:
+                        st.warning("🔑 Make sure you have GitHub credentials configured")
+
+        except subprocess.TimeoutExpired:
+            st.error("❌ Deployment timed out. Try again in a moment.")
         except Exception as e:
             st.error(f"❌ Deploy Error: {e}")
+            st.text(str(e))
 
     st.markdown("---")
     st.caption("🤖 Click buttons to automate the entire pipeline")
