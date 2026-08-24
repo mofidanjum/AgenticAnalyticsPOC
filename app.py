@@ -220,7 +220,9 @@ with tab1:
     if build_viz and user_request:
         with st.spinner("🤖 Claude is creating visualization..."):
             try:
-                api_key = st.secrets.get("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY"))
+                # Get API key from environment or secrets
+                api_key = os.environ.get("ANTHROPIC_API_KEY") or st.secrets.get("ANTHROPIC_API_KEY", None)
+
                 if not api_key:
                     st.error("❌ API Key not configured")
                     st.info("""
