@@ -1,141 +1,132 @@
 table: orders
-description: >
-  One row per line item in a retail order. Grain is order-line (not order).
-  An order with 3 products spans 3 rows sharing the same Order ID.
-  Data covers US retail sales 2015-2016.
-  Captures sales, profit, discounts, and returns across 3 product categories.
+description: '[Edit: describe the table, grain, and notable characteristics]'
 columns:
   row id:
     type: BIGINT
     role: id
     unit: null
     distinct_count: 9994
-    description: Unique row identifier within this dataset (one per line item)
+    description: '[Edit: describe what Row ID means]'
   order id:
     type: VARCHAR
     role: id
     unit: null
     distinct_count: 5009
-    description: Groups line items into one order (not unique per row, can repeat for multi-item orders)
+    description: '[Edit: describe what Order ID means]'
   order date:
     type: VARCHAR
     role: timestamp
     unit: null
     distinct_count: 1237
-    description: When the order was placed (format MM/DD/YYYY, stored as string)
+    description: '[Edit: describe what Order Date means]'
   ship date:
     type: VARCHAR
     role: timestamp
     unit: null
     distinct_count: 1334
-    description: When the order shipped (format MM/DD/YYYY, stored as string)
+    description: '[Edit: describe what Ship Date means]'
   ship mode:
     type: VARCHAR
     role: dimension
     unit: null
     distinct_count: 4
-    description: Delivery method; one of Same Day, One Day, Second Class, Standard Class
+    description: '[Edit: describe what Ship Mode means]'
   customer id:
     type: VARCHAR
     role: id
     unit: null
     distinct_count: 793
-    description: Unique customer identifier
+    description: '[Edit: describe what Customer ID means]'
   customer name:
     type: VARCHAR
     role: dimension
     unit: null
     distinct_count: 793
-    description: Full name of customer
+    description: '[Edit: describe what Customer Name means]'
   segment:
     type: VARCHAR
     role: dimension
     unit: null
     distinct_count: 3
-    description: Customer segment; one of Consumer, Corporate, or Home Office
+    description: '[Edit: describe what Segment means]'
   country:
     type: VARCHAR
     role: dimension
     unit: null
     distinct_count: 1
-    description: Country of order (always United States in this dataset)
+    description: '[Edit: describe what Country means]'
   city:
     type: VARCHAR
     role: dimension
     unit: null
     distinct_count: 531
-    description: City where order shipped to
+    description: '[Edit: describe what City means]'
   state:
     type: VARCHAR
     role: dimension
     unit: null
     distinct_count: 49
-    description: US state code (2-letter) where order shipped to
+    description: '[Edit: describe what State means]'
   postal code:
     type: BIGINT
     role: dimension
     unit: null
     distinct_count: 631
-    description: US ZIP code where order shipped to (stored as number, may lose leading zeros)
+    description: '[Edit: describe what Postal Code means]'
   region:
     type: VARCHAR
     role: dimension
     unit: null
     distinct_count: 4
-    description: US region; one of East, West, Central, or South
+    description: '[Edit: describe what Region means]'
   product id:
     type: VARCHAR
     role: id
     unit: null
     distinct_count: 1862
-    description: Unique product identifier
+    description: '[Edit: describe what Product ID means]'
   category:
     type: VARCHAR
     role: dimension
     unit: null
     distinct_count: 3
-    description: Product category; one of Furniture, Office Supplies, or Technology
+    description: '[Edit: describe what Category means]'
   sub-category:
     type: VARCHAR
     role: dimension
     unit: null
     distinct_count: 17
-    description: Detailed product subcategory (e.g., Chairs, Tables, Bookcases, Copiers, Phones)
+    description: '[Edit: describe what Sub-Category means]'
   product name:
     type: VARCHAR
     role: dimension
     unit: null
     distinct_count: 1850
-    description: Full product name/description
+    description: '[Edit: describe what Product Name means]'
   sales:
     type: DOUBLE
     role: measure
     unit: usd
     distinct_count: 5825
-    description: Revenue for this line item before discount (in USD)
+    description: '[Edit: describe what Sales means]'
   quantity:
     type: BIGINT
     role: measure
     unit: count
     distinct_count: 14
-    description: Number of units ordered for this line item
+    description: '[Edit: describe what Quantity means]'
   discount:
     type: DOUBLE
     role: measure
     unit: percent
     distinct_count: 12
-    description: Discount applied to line item (0.0 = no discount, 0.5 = 50% off)
+    description: '[Edit: describe what Discount means]'
   profit:
     type: DOUBLE
     role: measure
     unit: usd
     distinct_count: 7287
-    description: Profit after discount and costs (in USD; can be negative due to returns/deep discounts)
+    description: '[Edit: describe what Profit means]'
 relationships: []
-
 notable_values:
-  - Profit can be negative — don't assume SUM(profit) > 0
-  - Order ID is not unique per row — use (order_id, product_id) to uniquely identify a line item
-  - Dates are stored as VARCHAR strings (MM/DD/YYYY), not DATE type
-  - Discount can exceed sales value on loss-making items
-  - All orders are US-based (Country = United States)
+- '[Edit: add constraints, gotchas, edge cases]'
