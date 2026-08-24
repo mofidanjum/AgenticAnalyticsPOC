@@ -198,33 +198,8 @@ except Exception as e:
     st.info("📌 Try refreshing the page or clicking '📥 Refresh Data' in the sidebar")
     st.stop()
 
-# Filters - No KPI cards, clean layout
-st.subheader("🔍 Filters")
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    regions = [r[0] for r in con.sql('SELECT DISTINCT "Region" FROM orders ORDER BY "Region"').fetchall()]
-    selected_regions = st.multiselect("📍 Region", regions, default=regions, key="region_filter")
-
-with col2:
-    categories = [c[0] for c in con.sql('SELECT DISTINCT "Category" FROM orders ORDER BY "Category"').fetchall()]
-    selected_categories = st.multiselect("📦 Category", categories, default=categories, key="category_filter")
-
-with col3:
-    segments = [s[0] for s in con.sql('SELECT DISTINCT "Segment" FROM orders ORDER BY "Segment"').fetchall()]
-    selected_segments = st.multiselect("👥 Segment", segments, default=segments, key="segment_filter")
-
-# Build filter query
-filter_regions = "', '".join(selected_regions) if selected_regions else "East"
-filter_categories = "', '".join(selected_categories) if selected_categories else "Furniture"
-filter_segments = "', '".join(selected_segments) if selected_segments else "Consumer"
-
-filtered_df = con.sql(f"""
-    SELECT * FROM orders
-    WHERE "Region" IN ('{filter_regions}')
-    AND "Category" IN ('{filter_categories}')
-    AND "Segment" IN ('{filter_segments}')
-""").df()
+# Load all data (no filters)
+filtered_df = con.sql("SELECT * FROM orders").df()
 
 # ===== TABS: Visual, Data, SQL =====
 tab1, tab2, tab3 = st.tabs(["📊 Visual", "📋 Data", "🔍 SQL"])
