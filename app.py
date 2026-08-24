@@ -1,15 +1,18 @@
 """
 Agentic Analytics POC - Streamlit Dashboard
-Core version: Focus on reliability and core features
+Full-featured version with Data, SQL, and Visualization tabs
 """
 import streamlit as st
 import duckdb
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 import os
 import subprocess
 import sys
 import time
 from pathlib import Path
+from anthropic import Anthropic
 
 st.set_page_config(page_title="Analytics Dashboard", layout="wide")
 
@@ -54,8 +57,6 @@ def run_python_script(script_path):
     try:
         # Close any open connections first
         st.cache_resource.clear()
-
-        # Give OS time to release file handles
         time.sleep(0.5)
 
         result = subprocess.run(
@@ -77,8 +78,7 @@ with st.sidebar:
 
     # Button 1: Refresh Data
     if st.button("📥 Refresh Data", use_container_width=True, key="refresh_btn"):
-        st.cache_resource.clear()  # Close DB connection
-
+        st.cache_resource.clear()
         st.info("🔄 Starting data refresh pipeline...")
 
         steps_cols = st.columns(3)
@@ -142,6 +142,32 @@ with st.sidebar:
         except Exception as e:
             st.error(f"❌ Error: {e}")
 
+    # Button 3: Deploy
+    if st.button("🚀 Deploy to Cloud", use_container_width=True, key="deploy_btn"):
+        st.info("📤 Deploying to Streamlit Cloud...")
+        try:
+            subprocess.run(["git", "add", "."], check=False, capture_output=True)
+            result = subprocess.run(
+                ["git", "commit", "-m", "Auto-deploy: Updated data and dashboard"],
+                capture_output=True,
+                text=True
+            )
+            push_result = subprocess.run(
+                ["git", "push", "origin", "main"],
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+
+            if push_result.returncode == 0:
+                st.success("✅ Deployed to GitHub!")
+                st.info("📍 Streamlit Cloud auto-redeploys in 2-3 minutes")
+            else:
+                st.error("❌ Push failed")
+                st.text(push_result.stderr)
+        except Exception as e:
+            st.error(f"❌ Deploy Error: {e}")
+
     st.markdown("---")
     st.caption("Click buttons to automate pipeline")
 
@@ -151,86 +177,148 @@ con = get_connection()
 if con is None:
     st.warning("⚠️ Database not found")
     st.info("📌 Click '📥 Refresh Data' in sidebar to get started")
-else:
-    # Load and display KPIs
-    try:
-        total_sales = con.sql('SELECT SUM("Sales") FROM orders').fetchall()[0][0]
-        total_profit = con.sql('SELECT SUM("Profit") FROM orders').fetchall()[0][0]
-        total_orders = con.sql('SELECT COUNT(DISTINCT "Order ID") FROM orders').fetchall()[0][0]
-        total_customers = con.sql('SELECT COUNT(DISTINCT "Customer ID") FROM orders').fetchall()[0][0]
+    st.stop()
 
-        col1, col2, col3, col4 = st.columns(4, gap="medium")
-        with col1:
-            st.metric("💰 Total Sales", f"${total_sales:,.0f}")
-        with col2:
-            st.metric("📈 Total Profit", f"${total_profit:,.0f}")
-        with col3:
-            st.metric("📋 Total Orders", f"{total_orders:,.0f}")
-        with col4:
-            st.metric("👥 Customers", f"{total_customers:,.0f}")
+# Load KPIs
+try:
+    total_sales = con.sql('SELECT SUM("Sales") FROM orders').fetchall()[0][0]
+    total_profit = con.sql('SELECT SUM("Profit") FROM orders').fetchall()[0][0]
+    total_orders = con.sql('SELECT COUNT(DISTINCT "Order ID") FROM orders').fetchall()[0][0]
+    total_customers = con.sql('SELECT COUNT(DISTINCT "Customer ID") FROM orders').fetchall()[0][0]
 
-        # Filters
-        st.subheader("🔍 Filters")
-        col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4, gap="medium")
+    with col1:
+        st.metric("💰 Total Sales", f"${total_sales:,.0f}")
+    with col2:
+        st.metric("📈 Total Profit", f"${total_profit:,.0f}")
+    with col3:
+        st.metric("📋 Total Orders", f"{total_orders:,.0f}")
+    with col4:
+        st.metric("👥 Customers", f"{total_customers:,.0f}")
 
-        with col1:
-            regions = [r[0] for r in con.sql('SELECT DISTINCT "Region" FROM orders ORDER BY "Region"').fetchall()]
-            selected_regions = st.multiselect("📍 Region", regions, default=regions)
+except Exception as e:
+    st.error(f"Error loading KPIs: {e}")
+    st.stop()
 
-        with col2:
-            categories = [c[0] for c in con.sql('SELECT DISTINCT "Category" FROM orders ORDER BY "Category"').fetchall()]
-            selected_categories = st.multiselect("📦 Category", categories, default=categories)
+# Filters
+st.subheader("🔍 Filters")
+col1, col2, col3 = st.columns(3)
 
-        with col3:
-            segments = [s[0] for s in con.sql('SELECT DISTINCT "Segment" FROM orders ORDER BY "Segment"').fetchall()]
-            selected_segments = st.multiselect("👥 Segment", segments, default=segments)
+with col1:
+    regions = [r[0] for r in con.sql('SELECT DISTINCT "Region" FROM orders ORDER BY "Region"').fetchall()]
+    selected_regions = st.multiselect("📍 Region", regions, default=regions, key="region_filter")
 
-        # Ask Question
-        st.subheader("💭 Ask a Question")
-        question = st.text_area(
-            "What would you like to know?",
-            placeholder="e.g., 'Show sales by region' or 'What is profit by category?'",
-            height=80
+with col2:
+    categories = [c[0] for c in con.sql('SELECT DISTINCT "Category" FROM orders ORDER BY "Category"').fetchall()]
+    selected_categories = st.multiselect("📦 Category", categories, default=categories, key="category_filter")
+
+with col3:
+    segments = [s[0] for s in con.sql('SELECT DISTINCT "Segment" FROM orders ORDER BY "Segment"').fetchall()]
+    selected_segments = st.multiselect("👥 Segment", segments, default=segments, key="segment_filter")
+
+# Build filter query
+filter_regions = "', '".join(selected_regions) if selected_regions else "East"
+filter_categories = "', '".join(selected_categories) if selected_categories else "Furniture"
+filter_segments = "', '".join(selected_segments) if selected_segments else "Consumer"
+
+filtered_df = con.sql(f"""
+    SELECT * FROM orders
+    WHERE "Region" IN ('{filter_regions}')
+    AND "Category" IN ('{filter_categories}')
+    AND "Segment" IN ('{filter_segments}')
+""").df()
+
+# ===== TABS: Visual, Data, SQL =====
+tab1, tab2, tab3 = st.tabs(["📊 Visual", "📋 Data", "🔍 SQL"])
+
+# ===== TAB 1: VISUAL =====
+with tab1:
+    st.subheader("📊 Build Visualizations")
+
+    col1, col2 = st.columns([3, 1])
+
+    with col1:
+        user_request = st.text_area(
+            "What visualization would you like?",
+            placeholder="e.g., 'Show sales by region', 'Create a pie chart of profit by category', 'Display top 10 states by sales'",
+            height=80,
+            key="viz_request"
         )
 
-        if st.button("🤖 Analyze", use_container_width=True):
-            if not question:
-                st.warning("Please ask a question")
-            else:
-                with st.spinner("🤖 Claude is thinking..."):
+    with col2:
+        st.write("")
+        st.write("")
+        build_viz = st.button("🎨 Build Visualization", use_container_width=True)
+
+    if build_viz and user_request:
+        with st.spinner("🤖 Claude is creating visualization..."):
+            try:
+                api_key = st.secrets.get("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY"))
+                if not api_key:
+                    st.error("❌ API Key not found")
+                    st.stop()
+
+                client = Anthropic(api_key=api_key)
+
+                system_prompt = """You are a data visualization expert. The user has sales data with columns:
+Sales, Profit, Region, Category, Segment, Order Date, Ship Date, Quantity, Discount, Customer Name, etc.
+
+Based on their request, create Python code using plotly to visualize the data.
+Return ONLY valid Python code that creates a plotly figure. No explanations, no markdown.
+The dataframe is available as 'filtered_df'.
+End with: fig.show()"""
+
+                response = client.messages.create(
+                    model="claude-haiku-4-5-20251001",
+                    max_tokens=1000,
+                    system=system_prompt,
+                    messages=[{"role": "user", "content": user_request}]
+                )
+
+                code = next((b.text for b in response.content if hasattr(b, "text")), None)
+
+                if code:
                     try:
-                        from anthropic import Anthropic
-
-                        api_key = st.secrets.get("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY"))
-                        if not api_key:
-                            st.error("❌ API Key not found. Set ANTHROPIC_API_KEY environment variable.")
-                            st.stop()
-
-                        client = Anthropic(api_key=api_key)
-
-                        system_prompt = """You are an analytics assistant for retail sales data.
-Data: Orders table with Sales, Profit, Region, Category, Segment columns.
-US retail data from 2015-2016.
-Answer questions clearly with specific numbers."""
-
-                        response = client.messages.create(
-                            model="claude-haiku-4-5-20251001",
-                            max_tokens=500,
-                            system=system_prompt,
-                            messages=[{"role": "user", "content": question}]
-                        )
-
-                        answer = next((b.text for b in response.content if hasattr(b, "text")), None)
-                        if answer:
-                            st.success("✅ Response")
-                            st.write(answer)
-                        else:
-                            st.error("No response generated")
-
+                        # Execute the code
+                        exec_globals = {"filtered_df": filtered_df, "px": px, "go": go, "st": st}
+                        exec(code, exec_globals)
+                        st.success("✅ Visualization created!")
                     except Exception as e:
-                        st.error(f"Error: {e}")
+                        st.error(f"Visualization error: {e}")
+                        st.text(code)
+                else:
+                    st.error("No code generated")
 
-    except Exception as e:
-        st.error(f"Error loading data: {e}")
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+# ===== TAB 2: DATA =====
+with tab2:
+    st.subheader("📋 Data Table")
+    st.write(f"Showing {len(filtered_df):,} rows")
+    st.dataframe(filtered_df, use_container_width=True, height=600)
+
+# ===== TAB 3: SQL =====
+with tab3:
+    st.subheader("🔍 SQL Query")
+
+    sql_query = st.text_area(
+        "Enter SQL query:",
+        value=f"""SELECT * FROM orders
+WHERE "Region" IN ('{filter_regions}')
+AND "Category" IN ('{filter_categories}')
+AND "Segment" IN ('{filter_segments}')
+LIMIT 100""",
+        height=120,
+        key="sql_input"
+    )
+
+    if st.button("▶️ Execute Query", use_container_width=True):
+        try:
+            result_df = con.sql(sql_query).df()
+            st.success(f"✅ Query executed: {len(result_df)} rows")
+            st.dataframe(result_df, use_container_width=True, height=600)
+        except Exception as e:
+            st.error(f"SQL Error: {e}")
 
 st.caption("Agentic Analytics POC • Superstore Dataset • Claude AI Powered")
