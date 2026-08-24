@@ -7,21 +7,31 @@ This script:
 - Creates a trimmed sample file (first 200 rows) for fixtures
 """
 
-import subprocess
 import pandas as pd
 from pathlib import Path
+from kaggle.api.kaggle_api_extended import KaggleApi
+import os
 
 # Create directories
 Path("data/raw").mkdir(parents=True, exist_ok=True)
 Path("data/sample").mkdir(parents=True, exist_ok=True)
 
-# Download from Kaggle
+# Download from Kaggle using Python API
 print("Downloading Superstore dataset from Kaggle...")
-subprocess.run(
-    ["kaggle", "datasets", "download", "-d", "vivek468/superstore-dataset-final",
-     "-p", "data/raw", "--unzip"],
-    check=True
-)
+try:
+    api = KaggleApi()
+    api.authenticate()
+
+    # Download dataset
+    api.dataset_download_files(
+        'vivek468/superstore-dataset-final',
+        path='data/raw',
+        unzip=True
+    )
+    print("✓ Download complete")
+except Exception as e:
+    print(f"Error: {e}")
+    raise
 
 # Read the CSV (handle encoding issues)
 print("Reading downloaded CSV...")

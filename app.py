@@ -80,21 +80,103 @@ with st.sidebar:
 
     with col1:
         if st.button("🔄 Refresh Data", use_container_width=True, key="refresh_btn"):
-            st.info("🔄 Refreshing data from Kaggle...")
-            import subprocess
-            steps = [
-                ("📥 Downloading", "python analytics/01_download_dataset.py"),
-                ("📚 Loading DB", "python analytics/02_load_duckdb.py"),
-                ("📝 Metadata", "python analytics/03_generate_metadata_draft.py"),
-            ]
-            for step_name, cmd in steps:
-                st.write(f"{step_name}...")
-                result = subprocess.run(cmd, shell=True, capture_output=True)
-                if result.returncode == 0:
-                    st.write(f"✅ {step_name} Done")
-                else:
-                    st.error(f"❌ {step_name} Failed")
-            st.success("✅ Data Refresh Complete! Reload page to see updates.")
+            # Check if Kaggle credentials exist (env var or json file)
+            import os
+            import json
+
+            kaggle_username = os.getenv("KAGGLE_USERNAME")
+            kaggle_key = os.getenv("KAGGLE_KEY")
+            kaggle_json = os.path.expanduser("~/.kaggle/kaggle.json")
+
+            # Try to create kaggle.json from env vars if it doesn't exist
+            if kaggle_username and kaggle_key and not os.path.exists(kaggle_json):
+                try:
+                    os.makedirs(os.path.expanduser("~/.kaggle"), exist_ok=True)
+                    with open(kaggle_json, 'w') as f:
+                        json.dump({"username": kaggle_username, "key": kaggle_key}, f)
+                    os.chmod(kaggle_json, 0o600)
+                    st.success("✅ Kaggle credentials loaded from environment variables")
+                except Exception as e:
+                    st.warning(f"⚠️ Could not create kaggle.json: {e}")
+
+            if not os.path.exists(kaggle_json) and not (kaggle_username and kaggle_key):
+                st.error("❌ Kaggle API credentials not found!")
+                st.info("""
+                📋 To set up Kaggle API (One-time setup):
+
+                **Option 1: Using Environment Variables (Recommended)**
+                ```powershell
+                $env:KAGGLE_USERNAME = "your_username"
+                $env:KAGGLE_KEY = "your_api_key"
+                ```
+
+                **Option 2: Manual File Setup**
+                1. Go to https://www.kaggle.com/settings/account
+                2. Click "Create New Token"
+                3. Save kaggle.json to: C:\\Users\\Sarah\\.kaggle\\kaggle.json
+
+                After setup, click Refresh Data again!
+                """)
+            else:
+                st.info("🔄 Starting data refresh pipeline...")
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+
+                try:
+                    import subprocess
+                    import sys
+                    import os
+
+                    # Prepare environment with Kaggle credentials
+                    env = os.environ.copy()
+                    env["KAGGLE_USERNAME"] = os.getenv("KAGGLE_USERNAME", "")
+                    env["KAGGLE_KEY"] = os.getenv("KAGGLE_KEY", "")
+
+                    # Use the same Python interpreter as Streamlit (from venv)
+                    python_exe = sys.executable
+
+                    # Step 1: Download
+                    status_text.write("📥 Step 1: Downloading from Kaggle...")
+                    progress_bar.progress(25)
+                    cmd = f'"{python_exe}" analytics/01_download_dataset.py'
+                    result = subprocess.run(cmd, shell=True, capture_output=True, timeout=120, env=env)
+                    if result.returncode == 0:
+                        st.success("✅ Download complete")
+                    else:
+                        st.warning("⚠️ Download failed")
+                        if result.stderr:
+                            st.error(f"Error: {result.stderr.decode()[:300]}")
+
+                    # Step 2: Load into DuckDB
+                    status_text.write("📚 Step 2: Loading into DuckDB...")
+                    progress_bar.progress(50)
+                    cmd = f'"{python_exe}" analytics/02_load_duckdb.py'
+                    result = subprocess.run(cmd, shell=True, capture_output=True, timeout=60, env=env)
+
+                    # Verify
+                    try:
+                        st.cache_resource.clear()
+                        con_new = duckdb.connect("data/processed/superstore.duckdb", read_only=True)
+                        row_count = con_new.sql('SELECT COUNT(*) FROM orders').fetchall()[0][0]
+                        st.success(f"✅ Loaded {row_count:,} rows into DuckDB")
+                    except Exception as e:
+                        st.warning(f"⚠️ Load verification: {e}")
+
+                    # Step 3: Metadata
+                    status_text.write("📝 Step 3: Updating Metadata...")
+                    progress_bar.progress(75)
+                    cmd = f'"{python_exe}" analytics/03_generate_metadata_draft.py'
+                    result = subprocess.run(cmd, shell=True, capture_output=True, timeout=60, env=env)
+                    st.success("✅ Metadata updated")
+
+                    progress_bar.progress(100)
+                    st.success("🎉 Data Refresh Complete!")
+                    st.info("💡 Refresh your browser to see the new data!")
+
+                except subprocess.TimeoutExpired:
+                    st.error("❌ Operation timed out")
+                except Exception as e:
+                    st.error(f"❌ Error: {e}")
 
     with col2:
         if st.button("🧪 Verify Data", use_container_width=True, key="verify_btn"):
