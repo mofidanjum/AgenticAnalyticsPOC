@@ -123,7 +123,12 @@ if st.button("🤖 Analyze", use_container_width=True):
     else:
         with st.spinner("🤖 Claude is analyzing..."):
             try:
-                client = Anthropic()
+                api_key = st.secrets.get("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY"))
+                if not api_key:
+                    st.error("❌ ANTHROPIC_API_KEY not configured. Set it in Streamlit Cloud secrets.")
+                    st.stop()
+
+                client = Anthropic(api_key=api_key)
 
                 system_prompt = """You are an analytics assistant for retail sales data.
 Available data: Orders table with Sales, Profit, Region, Category, Segment columns.
