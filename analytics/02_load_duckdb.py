@@ -11,6 +11,8 @@ Why DuckDB for an agent-facing layer:
 import duckdb
 import pandas as pd
 from pathlib import Path
+import time
+import os
 
 # Paths
 RAW_CSV = "data/raw/Sample - Superstore.csv"
@@ -18,6 +20,15 @@ DB_PATH = "data/processed/superstore.duckdb"
 
 # Create output directory if it doesn't exist
 Path("data/processed").mkdir(parents=True, exist_ok=True)
+
+# Remove old database file if it exists (forces fresh load)
+if os.path.exists(DB_PATH):
+    try:
+        os.remove(DB_PATH)
+        print(f"✓ Removed old database file")
+    except:
+        print(f"⚠ Could not remove old database, will try to overwrite")
+        time.sleep(1)
 
 # Read CSV (with latin-1 encoding to handle special chars)
 print(f"Reading {RAW_CSV}...")

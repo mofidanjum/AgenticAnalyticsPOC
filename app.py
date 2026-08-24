@@ -8,6 +8,7 @@ import pandas as pd
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 st.set_page_config(page_title="Analytics Dashboard", layout="wide")
@@ -49,14 +50,21 @@ def get_connection():
         return None
 
 def run_python_script(script_path):
-    """Execute a Python script"""
+    """Execute a Python script in a fresh process"""
     try:
+        # Close any open connections first
+        st.cache_resource.clear()
+
+        # Give OS time to release file handles
+        time.sleep(0.5)
+
         result = subprocess.run(
             [sys.executable, script_path],
             capture_output=True,
             text=True,
             cwd=os.getcwd(),
-            timeout=120
+            timeout=120,
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == 'win32' else 0
         )
         return result.returncode == 0, result.stdout, result.stderr
     except Exception as e:

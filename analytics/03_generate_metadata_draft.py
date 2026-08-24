@@ -7,12 +7,16 @@ The output is a starting point for hand-editing with business meanings.
 import duckdb
 import yaml
 from pathlib import Path
+import time
 
 DB_PATH = "data/processed/superstore.duckdb"
 METADATA_DIR = Path("analytics/metadata")
 METADATA_FILE = METADATA_DIR / "orders.yaml"
 
 METADATA_DIR.mkdir(parents=True, exist_ok=True)
+
+# Wait a moment to ensure DB is fully ready
+time.sleep(0.5)
 
 con = duckdb.connect(DB_PATH)
 
