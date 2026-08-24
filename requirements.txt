@@ -3,3 +3,4 @@ anthropic
 duckdb
 pandas
 plotly
+python-dotenv

@@ -14,6 +14,13 @@ import time
 from pathlib import Path
 from anthropic import Anthropic
 
+# Load .env file if it exists
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except:
+    pass
+
 st.set_page_config(page_title="Analytics Dashboard", layout="wide", initial_sidebar_state="expanded")
 
 # Clear cache on startup to prevent stale state
