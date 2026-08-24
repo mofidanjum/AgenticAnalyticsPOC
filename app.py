@@ -52,6 +52,13 @@ def get_connection():
     except:
         return None
 
+def close_connection():
+    """Close the cached connection to release file lock"""
+    try:
+        st.cache_resource.clear()
+    except:
+        pass
+
 def run_python_script(script_path, step_name):
     """Execute a Python script and show progress"""
     try:
@@ -84,6 +91,9 @@ with st.sidebar:
     if st.button("📥 Refresh Data", use_container_width=True):
         st.info("🔄 Starting data refresh pipeline...")
 
+        # Close any open connections to release file lock
+        close_connection()
+
         col1, col2, col3 = st.columns(3)
         with col1:
             progress1 = st.empty()
@@ -105,7 +115,7 @@ with st.sidebar:
             else:
                 st.error("❌ Download Failed")
 
-        # Step 2: Load
+        # Step 2: Load (connection is closed, file should be unlocked)
         with progress2.container():
             st.write("📚 Loading into DuckDB...")
         success2 = run_python_script("analytics/02_load_duckdb.py", "Load")

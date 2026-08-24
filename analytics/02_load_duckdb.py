@@ -28,17 +28,22 @@ print(f"Loaded {len(df)} rows, {len(df.columns)} columns")
 print(f"Creating DuckDB database at {DB_PATH}...")
 con = duckdb.connect(DB_PATH)
 
-# Create table from dataframe
-con.sql("CREATE OR REPLACE TABLE orders AS SELECT * FROM df")
+try:
+    # Create table from dataframe
+    con.sql("CREATE OR REPLACE TABLE orders AS SELECT * FROM df")
 
-# Verify
-result = con.sql("SELECT COUNT(*) as row_count FROM orders").fetchall()
-print(f"✓ Table 'orders' created with {result[0][0]} rows")
+    # Verify
+    result = con.sql("SELECT COUNT(*) as row_count FROM orders").fetchall()
+    print(f"✓ Table 'orders' created with {result[0][0]} rows")
 
-# Show schema
-schema = con.sql("DESCRIBE orders").fetchall()
-print("\nTable schema:")
-for col_name, col_type, *_ in schema:
-    print(f"  {col_name}: {col_type}")
+    # Show schema
+    schema = con.sql("DESCRIBE orders").fetchall()
+    print("\nTable schema:")
+    for col_name, col_type, *_ in schema:
+        print(f"  {col_name}: {col_type}")
 
-print(f"\n✓ Stage 2 complete. DuckDB ready at {DB_PATH}")
+    print(f"\n✓ Stage 2 complete. DuckDB ready at {DB_PATH}")
+finally:
+    # Close connection to release file lock
+    con.close()
+    print("✓ Connection closed, file lock released")
