@@ -23,8 +23,10 @@ if 'session_initialized' not in st.session_state:
 
 st.markdown("""
 <style>
-.block-container { padding-top: 1rem !important; }
-h1 { margin-top: 0 !important; margin-bottom: 0.3rem !important; }
+.block-container { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+h1 { margin-top: 0 !important; margin-bottom: 0.2rem !important; }
+h2 { margin-top: 0.5rem !important; margin-bottom: 0.3rem !important; }
+p { margin: 0.2rem 0 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -196,52 +198,7 @@ except Exception as e:
     st.info("📌 Try refreshing the page or clicking '📥 Refresh Data' in the sidebar")
     st.stop()
 
-# Load KPIs - Fancy Cards
-try:
-    total_sales = con.sql('SELECT SUM("Sales") FROM orders').fetchall()[0][0]
-    total_profit = con.sql('SELECT SUM("Profit") FROM orders').fetchall()[0][0]
-    total_orders = con.sql('SELECT COUNT(DISTINCT "Order ID") FROM orders').fetchall()[0][0]
-    total_customers = con.sql('SELECT COUNT(DISTINCT "Customer ID") FROM orders').fetchall()[0][0]
-
-    col1, col2, col3, col4 = st.columns(4, gap="medium")
-
-    with col1:
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
-            <p style="margin: 0; font-size: 14px; opacity: 0.9;">💰 Total Sales</p>
-            <p style="margin: 5px 0 0 0; font-size: 28px; font-weight: bold;">$""" + f"{total_sales:,.0f}" + """</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col2:
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);">
-            <p style="margin: 0; font-size: 14px; opacity: 0.9;">📈 Total Profit</p>
-            <p style="margin: 5px 0 0 0; font-size: 28px; font-weight: bold;">$""" + f"{total_profit:,.0f}" + """</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col3:
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);">
-            <p style="margin: 0; font-size: 14px; opacity: 0.9;">📋 Total Orders</p>
-            <p style="margin: 5px 0 0 0; font-size: 28px; font-weight: bold;">""" + f"{total_orders:,.0f}" + """</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col4:
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 20px; border-radius: 12px; text-align: center; color: white; box-shadow: 0 4px 15px rgba(250, 112, 154, 0.4);">
-            <p style="margin: 0; font-size: 14px; opacity: 0.9;">👥 Customers</p>
-            <p style="margin: 5px 0 0 0; font-size: 28px; font-weight: bold;">""" + f"{total_customers:,.0f}" + """</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-except Exception as e:
-    st.error(f"Error loading KPIs: {e}")
-    st.stop()
-
-# Filters
+# Filters - No KPI cards, clean layout
 st.subheader("🔍 Filters")
 col1, col2, col3 = st.columns(3)
 
