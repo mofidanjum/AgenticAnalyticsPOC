@@ -193,70 +193,87 @@ with st.sidebar:
 con = get_connection()
 
 if con is None:
-    st.error("❌ Database not found. Click '📥 Refresh Data' in the sidebar to download and load data.")
-    st.stop()
+    st.warning("⚠️ Database not found. Starting fresh...")
+    st.info("📌 Click '📥 Refresh Data' in the sidebar to download and load data.")
 
-# Load KPIs
-try:
-    total_sales = con.sql('SELECT SUM("Sales") FROM orders').fetchall()[0][0]
-    total_profit = con.sql('SELECT SUM("Profit") FROM orders').fetchall()[0][0]
-    total_orders = con.sql('SELECT COUNT(DISTINCT "Order ID") FROM orders').fetchall()[0][0]
-    total_customers = con.sql('SELECT COUNT(DISTINCT "Customer ID") FROM orders').fetchall()[0][0]
-except Exception as e:
-    st.error(f"Error loading KPIs: {e}")
-    st.stop()
+    # Show alternative: create a simple message
+    st.markdown("""
+    ### 🚀 Quick Start
+    1. Click **'📥 Refresh Data'** in the sidebar
+    2. Wait for all 3 steps to complete
+    3. Dashboard will load automatically
 
-# KPI Cards
-col1, col2, col3, col4 = st.columns(4, gap="medium")
+    Or continue below to explore features...
+    """)
 
-with col1:
-    st.metric("💰 Total Sales", f"${total_sales:,.0f}")
+    # Let app continue with limited functionality
+    # (KPIs will show error, but sidebar buttons will work)
 
-with col2:
-    st.metric("📈 Total Profit", f"${total_profit:,.0f}")
+# Load KPIs only if database exists
+if con is not None:
+    try:
+        total_sales = con.sql('SELECT SUM("Sales") FROM orders').fetchall()[0][0]
+        total_profit = con.sql('SELECT SUM("Profit") FROM orders').fetchall()[0][0]
+        total_orders = con.sql('SELECT COUNT(DISTINCT "Order ID") FROM orders').fetchall()[0][0]
+        total_customers = con.sql('SELECT COUNT(DISTINCT "Customer ID") FROM orders').fetchall()[0][0]
 
-with col3:
-    st.metric("📋 Total Orders", f"{total_orders:,.0f}")
+        # KPI Cards
+        col1, col2, col3, col4 = st.columns(4, gap="medium")
 
-with col4:
-    st.metric("👥 Customers", f"{total_customers:,.0f}")
+        with col1:
+            st.metric("💰 Total Sales", f"${total_sales:,.0f}")
 
-st.subheader("🔍 Filters")
-col1, col2, col3 = st.columns(3)
+        with col2:
+            st.metric("📈 Total Profit", f"${total_profit:,.0f}")
 
-with col1:
-    regions = [r[0] for r in con.sql('SELECT DISTINCT "Region" FROM orders ORDER BY "Region"').fetchall()]
-    selected_regions = st.multiselect("📍 Region", regions, default=regions)
+        with col3:
+            st.metric("📋 Total Orders", f"{total_orders:,.0f}")
 
-with col2:
-    categories = [c[0] for c in con.sql('SELECT DISTINCT "Category" FROM orders ORDER BY "Category"').fetchall()]
-    selected_categories = st.multiselect("📦 Category", categories, default=categories)
+        with col4:
+            st.metric("👥 Customers", f"{total_customers:,.0f}")
 
-with col3:
-    segments = [s[0] for s in con.sql('SELECT DISTINCT "Segment" FROM orders ORDER BY "Segment"').fetchall()]
-    selected_segments = st.multiselect("👥 Segment", segments, default=segments)
+        st.subheader("🔍 Filters")
+        col1, col2, col3 = st.columns(3)
 
-st.subheader("💭 Ask a Question")
-question = st.text_area(
-    "What would you like to know about the data?",
-    placeholder="e.g., 'Show total sales by region' or 'What is our profit margin by category?'",
-    height=80
-)
+        with col1:
+            regions = [r[0] for r in con.sql('SELECT DISTINCT "Region" FROM orders ORDER BY "Region"').fetchall()]
+            selected_regions = st.multiselect("📍 Region", regions, default=regions)
 
-if st.button("🤖 Analyze", use_container_width=True):
-    if not question:
-        st.warning("Please ask a question")
-    else:
-        with st.spinner("🤖 Claude is analyzing..."):
-            try:
-                api_key = st.secrets.get("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY"))
-                if not api_key:
-                    st.error("❌ ANTHROPIC_API_KEY not configured. Set it in Streamlit Cloud secrets.")
-                    st.stop()
+        with col2:
+            categories = [c[0] for c in con.sql('SELECT DISTINCT "Category" FROM orders ORDER BY "Category"').fetchall()]
+            selected_categories = st.multiselect("📦 Category", categories, default=categories)
 
-                client = Anthropic(api_key=api_key)
+        with col3:
+            segments = [s[0] for s in con.sql('SELECT DISTINCT "Segment" FROM orders ORDER BY "Segment"').fetchall()]
+            selected_segments = st.multiselect("👥 Segment", segments, default=segments)
 
-                system_prompt = """You are an analytics assistant for retail sales data.
+    except Exception as e:
+        st.error(f"Error loading data: {e}")
+else:
+    st.info("💡 Waiting for database... Use '📥 Refresh Data' to get started.")
+
+if con is not None:
+    st.subheader("💭 Ask a Question")
+    question = st.text_area(
+        "What would you like to know about the data?",
+        placeholder="e.g., 'Show total sales by region' or 'What is our profit margin by category?'",
+        height=80
+    )
+
+    if st.button("🤖 Analyze", use_container_width=True):
+        if not question:
+            st.warning("Please ask a question")
+        else:
+            with st.spinner("🤖 Claude is analyzing..."):
+                try:
+                    api_key = st.secrets.get("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY"))
+                    if not api_key:
+                        st.error("❌ ANTHROPIC_API_KEY not configured. Set it in Streamlit Cloud secrets.")
+                        st.stop()
+
+                    client = Anthropic(api_key=api_key)
+
+                    system_prompt = """You are an analytics assistant for retail sales data.
 Available data: Orders table with columns like Sales, Profit, Region, Category, Segment.
 The data covers US retail orders from 2015-2016.
 When user asks a question:
@@ -267,24 +284,26 @@ When user asks a question:
 
 Be concise and data-driven."""
 
-                messages = [{"role": "user", "content": question}]
+                    messages = [{"role": "user", "content": question}]
 
-                response = client.messages.create(
-                    model="claude-haiku-4-5-20251001",
-                    max_tokens=800,
-                    system=system_prompt,
-                    messages=messages
-                )
+                    response = client.messages.create(
+                        model="claude-haiku-4-5-20251001",
+                        max_tokens=800,
+                        system=system_prompt,
+                        messages=messages
+                    )
 
-                answer = next((b.text for b in response.content if hasattr(b, "text")), None)
+                    answer = next((b.text for b in response.content if hasattr(b, "text")), None)
 
-                if answer:
-                    st.success("✅ Analysis Complete")
-                    st.write(answer)
-                else:
-                    st.error("No answer generated")
+                    if answer:
+                        st.success("✅ Analysis Complete")
+                        st.write(answer)
+                    else:
+                        st.error("No answer generated")
 
-            except Exception as e:
-                st.error(f"Error: {e}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+else:
+    st.info("💡 Load data first using '📥 Refresh Data' to ask questions")
 
 st.caption("Agentic Analytics POC • Superstore Dataset • Built with Claude AI")
