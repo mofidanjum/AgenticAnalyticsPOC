@@ -14,7 +14,12 @@ import time
 from pathlib import Path
 from anthropic import Anthropic
 
-st.set_page_config(page_title="Analytics Dashboard", layout="wide")
+st.set_page_config(page_title="Analytics Dashboard", layout="wide", initial_sidebar_state="expanded")
+
+# Clear cache on startup to prevent stale state
+if 'session_initialized' not in st.session_state:
+    st.cache_resource.clear()
+    st.session_state.session_initialized = True
 
 st.markdown("""
 <style>
@@ -169,14 +174,26 @@ with st.sidebar:
             st.error(f"❌ Deploy Error: {e}")
 
     st.markdown("---")
-    st.caption("Click buttons to automate pipeline")
+
+    # Clear cache button for troubleshooting
+    if st.button("🔄 Clear Cache & Refresh", use_container_width=True, key="clear_cache_btn"):
+        st.cache_resource.clear()
+        st.rerun()
+
+    st.markdown("---")
+    st.caption("Click buttons to automate pipeline or refresh if app shows blank")
 
 # ===== MAIN CONTENT =====
-con = get_connection()
+try:
+    con = get_connection()
 
-if con is None:
-    st.warning("⚠️ Database not found")
-    st.info("📌 Click '📥 Refresh Data' in sidebar to get started")
+    if con is None:
+        st.warning("⚠️ Database not found")
+        st.info("📌 Click '📥 Refresh Data' in sidebar to get started")
+        st.stop()
+except Exception as e:
+    st.error(f"❌ Error connecting to database: {e}")
+    st.info("📌 Try refreshing the page or clicking '📥 Refresh Data' in the sidebar")
     st.stop()
 
 # Load KPIs - Fancy Cards
