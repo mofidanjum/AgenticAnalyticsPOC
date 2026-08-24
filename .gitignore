@@ -1,9 +1,9 @@
 # Virtual environment
 .venv/
 
-# Data
+# Data (raw data ignored, but processed DB included for cloud deployment)
 data/raw/
-data/processed/
+# data/processed/ -- COMMENTED OUT: we need superstore.duckdb in cloud
 
 # Python
 __pycache__/
