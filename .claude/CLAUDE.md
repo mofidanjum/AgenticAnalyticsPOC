@@ -98,8 +98,7 @@ uv pip install duckdb pandas pyyaml matplotlib anthropic kaggle
 **Prerequisites**:
 - Kaggle account created
 - API token saved to `C:\Users\Sarah\.kaggle\kaggle.json`
-  - Username: `MOFIDANJUM`
-  - Token: `KGAT_a17dca5ed3380c9e5a031ec8b17e6a31`
+  - Get your username/token from https://www.kaggle.com/settings/account → API
 
 **Run**:
 ```powershell
@@ -541,8 +540,7 @@ print(f'✓ {result[0][0]} rows')
 
 **Kaggle setup**:
 - Token at: `C:\Users\Sarah\.kaggle\kaggle.json`
-- Username: `MOFIDANJUM`
-- Token: `KGAT_a17dca5ed3380c9e5a031ec8b17e6a31`
+- Get credentials from https://www.kaggle.com/settings/account → API
 
 **Claude API**:
 - Set `ANTHROPIC_API_KEY` environment variable
